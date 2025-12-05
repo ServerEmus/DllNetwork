@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="DllNetwork/DllNetwork.csproj" />
+  <Project Path="NetworkTest/NetworkTest.csproj" Id="5481435e-8aaf-4636-a930-404e91d4fd22" />
+</Solution>
