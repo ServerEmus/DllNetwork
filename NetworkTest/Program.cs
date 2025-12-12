@@ -12,7 +12,7 @@ internal class Program
         Shared.MainLogger.LevelSwitch.MinimumLevel = Serilog.Events.LogEventLevel.Verbose;
         Shared.MainLogger.ConsoleLevelSwitch.MinimumLevel = Serilog.Events.LogEventLevel.Verbose;
         Shared.MainLogger.FileLevelSwitch.MinimumLevel = Serilog.Events.LogEventLevel.Verbose;
-        Shared.MainLogger.FileName = $"logs_{DateTimeOffset.UtcNow.ToFileTime()}.txt";
+        Shared.MainLogger.FileName = $"networktest.txt";
         Shared.MainLogger.CreateNew();
         NetworkSettingsIni.Connect();
         BroadcastManager.Instance.Start();

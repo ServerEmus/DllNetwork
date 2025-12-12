@@ -8,6 +8,7 @@ namespace DllNetwork.Main;
 
 public class MainListener : INetEventListener
 {
+    public event Action<NetPeer, byte[]>? OnRejected;
     public static MainListener Listener { get; } = new();
     public void OnConnectionRequest(ConnectionRequest request)
     {
@@ -86,6 +87,13 @@ public class MainListener : INetEventListener
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
     {
+        if (disconnectInfo.Reason == DisconnectReason.ConnectionRejected)
+        {
+            byte[] bytes = [];
+            if (disconnectInfo.AdditionalData.AvailableBytes != 0)
+                bytes = disconnectInfo.AdditionalData.RawData;
+            OnRejected?.Invoke(peer, bytes);
+        }
         Log.Debug("[Main] {LocalPort} disconnected from {peer} [{Details}] with reason: {Reason}", peer.NetManager.LocalPort, peer, peer.Details, disconnectInfo.Reason);
     }
 }

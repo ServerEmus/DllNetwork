@@ -7,7 +7,6 @@ namespace DllNetwork.Main;
 
 public class MainManager : NetManager
 {
-    public string AccountId { get; set; } = Guid.NewGuid().ToString();
     public static MainManager Instance { get; } = new();
     public MainManager() : base(MainListener.Listener)
     {
@@ -42,14 +41,15 @@ public class MainManager : NetManager
         if (!IsRunning)
             return;
 
-        DiscoveryRequestPacket discovery = new()
+        DiscoveryPacket discovery = new()
         {
-            AccountId = AccountId,
+            AccountId = NetworkSettings.Instance.Account.AccountId,
+            IsRequest = true
         };
         NetDataWriter writer = new();
         PacketProcessor.Processor.WriteNetSerializable(writer, ref discovery);
         SendBroadcast(writer, NetworkSettings.Instance.Broadcast.BroadcastPort);
-        Log.Debug("Sent broadcast! MY account: {accountId}", AccountId);
+        Log.Debug("Sent broadcast! MY account: {accountId}", NetworkSettings.Instance.Account.AccountId);
     }
 
     public static void SendToAccount<TPacket>(string accountId, ref TPacket packet, byte channel = 0, DeliveryMethod delivery = DeliveryMethod.ReliableOrdered) where TPacket : INetSerializable

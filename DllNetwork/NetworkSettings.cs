@@ -27,6 +27,11 @@ public class NetworkSettings
     public AcceptSettings Accept { get; set; } = new();
 
     /// <summary>
+    /// Gets or sets the account configuration settings.
+    /// </summary>
+    public AccountConfig Account { get; set; } = new();
+
+    /// <summary>
     /// Gets or sets the configuration settings for the manager component.
     /// </summary>
     public ManagerSettings Manager { get; set; } = new();
@@ -113,4 +118,13 @@ public class BindingSettings
     /// Gets or sets the IPv6 address that the server binds to for incoming connections.
     /// </summary>
     public string BindIpv6 { get; set; } = "::";
+}
+
+/// <summary>
+/// Represents the configuration settings for a network account.
+/// </summary>
+public class AccountConfig
+{
+    public string AccountId { get; set; } = Guid.NewGuid().ToString();
+    public List<string> DenyConnectionAccounts { get; set; } = [];
 }
