@@ -4,6 +4,7 @@ using LiteNetLib;
 using Serilog;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
+using System.Security.Principal;
 
 namespace DllNetwork;
 
@@ -33,10 +34,16 @@ public class PeerAccount
                 AccountId = accountId,
             };
         }
+        Log.Debug("IsNetPeer: {ret}", endPoint is NetPeer);
+        if (endPoint is NetPeer netPeer)
+            account.Peers.Add(netPeer);
+
+        if (account.EndPoints.Contains(endPoint))
+            return;
 
         account.EndPoints.Add(endPoint);
 
-        Log.Debug("Account {Id} endpoints now: \n{endpoints}", accountId, string.Join(", ", account.EndPoints));
+        Log.Debug("Account {Id} endpoints now: \n{endpoints}\n{peers}", accountId, string.Join(", ", account.EndPoints), string.Join(", ", account.Peers));
     }
 
     /// <summary>
@@ -46,6 +53,7 @@ public class PeerAccount
     public static void Remove(string accountId)
     {
         AccountToPeer.Remove(accountId);
+        Log.Debug("Account {Id} removed!", accountId);
     }
     
     public static bool TryGetAccountId<TPoint>(TPoint point, [NotNullWhen(true)] out string accountId) where TPoint : IPEndPoint
@@ -118,13 +126,7 @@ public class PeerAccount
     public List<IPEndPoint> EndPoints = [];
 
 
-    public IEnumerable<NetPeer> Peers
-    {
-        get
-        {
-            return EndPoints.Where(static x => x is NetPeer peer).Select(static x => (NetPeer)x);
-        }
-    }
+    public List<NetPeer> Peers = [];
 
     public IEnumerable<NetPeer> BroadcastPeers
     {

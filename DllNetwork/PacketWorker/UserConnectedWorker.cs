@@ -8,8 +8,8 @@ public static partial class Workers
 {
     public static void UserConnected(UserConnectedPacket packet, ReceiveUserData data)
     {
-        Log.Debug("Packet: {packet}, rc: {data}", packet, data);
+        Log.Debug("UserConnected: Packet: {packet}, rc: {data}", packet, data);
 
-        PeerAccount.TryAdd(packet.AccountId, IPEndPoint.Parse(packet.IP));
+        PeerAccount.TryAdd(packet.AccountId, data.Peer);
     }
 }

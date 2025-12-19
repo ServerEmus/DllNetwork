@@ -22,6 +22,8 @@ public static partial class Workers
 
     private static void HandleRequest(DiscoveryPacket packet, ReceiveUserData data)
     {
+        Log.Debug("HandleRequest: Packet: {packet}, rc: {data}", packet, data);
+
         // Not a broadcast we dont care about it.
         if (data.UnconnectedMessage is not LiteNetLib.UnconnectedMessageType.Broadcast)
             return;
@@ -30,7 +32,10 @@ public static partial class Workers
         if (!BroadcastManager.Instance.IsRunning)
             return;
 
-        Log.Debug("Packet: {packet}, rc: {data}", packet, data);
+        // Ignore if its our account.
+        if (NetworkSettings.Instance.Account.AccountId == packet.AccountId)
+            return;
+
         PeerAccount.TryAdd(packet.AccountId, data.EndPoint);
 
         DiscoveryPacket discoveryResponsePacket = new()
@@ -45,15 +50,16 @@ public static partial class Workers
 
     private static void HandleResponse(DiscoveryPacket packet, ReceiveUserData data)
     {
+        Log.Debug("HandleResponse: Packet: {packet}, rc: {data}", packet, data);
+
         // Not a basic message we dont care about it.
         if (data.UnconnectedMessage is not LiteNetLib.UnconnectedMessageType.BasicMessage)
             return;
 
-        // MainManager not running, we dont care about the response (Main are the target audience.)
-        if (!MainManager.Instance.IsRunning)
+        // BroadcastManager not running, we dont care about the response (Main are the target audience.)
+        if (!BroadcastManager.Instance.IsRunning)
             return;
 
-        Log.Debug("Packet: {packet}, rc: {data}", packet, data);
-        MainManager.Instance.Connect(data.EndPoint, Constants.BroadcastKey);
+        BroadcastManager.Instance.Connect(data.EndPoint, Constants.BroadcastKey);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using LiteNetLib;
+using LiteNetLib.Utils;
 using Serilog;
 
 namespace DllNetwork.Broadcast;
@@ -76,13 +77,23 @@ public class BroadcastManager : NetManager
     
     public new void Start()
     {
-        if (!Start(NetworkSettings.Instance.Broadcast.BroadcastPort))
+        if (Start(NetworkSettings.Instance.Broadcast.BroadcastPort))
         {
-            Log.Error("[Broadcast] Start failed!");
+            Log.Debug("[Broadcast] Started!");
             return;
         }
-        Log.Debug("[Broadcast] Started!");
+        Log.Error("[Broadcast] Start failed!");
+        foreach (int fallbackPort in NetworkSettings.Instance.Broadcast.FallbackBroadcastPorts)
+        {
+            if (Start(fallbackPort))
+            {
+                Log.Debug("[Broadcast] Started!");
+                return;
+            }    
+        }
+        Log.Error("[Broadcast] All fallback ports are used and still cannot start!");
     }
+
 
     public void Update()
     {

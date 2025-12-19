@@ -44,18 +44,39 @@ public class MainManager : NetManager
         DiscoveryPacket discovery = new()
         {
             AccountId = NetworkSettings.Instance.Account.AccountId,
-            IsRequest = true
+            IsRequest = true,
+            Addresses = AddressHelper.GetInteraceAddresses(),
         };
         NetDataWriter writer = new();
         PacketProcessor.Processor.WriteNetSerializable(writer, ref discovery);
         SendBroadcast(writer, NetworkSettings.Instance.Broadcast.BroadcastPort);
+        foreach (int fallbackPort in NetworkSettings.Instance.Broadcast.FallbackBroadcastPorts)
+        {
+            Log.Debug("Sending to fallback port: {port}", fallbackPort);
+            SendBroadcast(writer, fallbackPort);
+        }
+
         Log.Debug("Sent broadcast! MY account: {accountId}", NetworkSettings.Instance.Account.AccountId);
     }
+
 
     public static void SendToAccount<TPacket>(string accountId, ref TPacket packet, byte channel = 0, DeliveryMethod delivery = DeliveryMethod.ReliableOrdered) where TPacket : INetSerializable
     {
         if (!PeerAccount.TryGetAccount(accountId, out var account))
+        {
+            Log.Debug("Account not found: {id}", accountId);
             return;
+        }
+
+        foreach (var item in account.EndPoints)
+        {
+            Log.Debug("EndPoints: {ite}", item);
+        }
+
+        foreach (var item in account.Peers)
+        {
+            Log.Debug("Peers: {ite}", item);
+        }
 
         foreach (var peer in account.MainPeers)
         {

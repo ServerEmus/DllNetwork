@@ -101,6 +101,8 @@ public class BroadcastSettings
     /// Gets or sets the network port used for UDP broadcast communication.
     /// </summary>
     public int BroadcastPort { get; set; } = 5555;
+
+    public List<int> FallbackBroadcastPorts { get; set; } = [];
 }
 
 /// <summary>
