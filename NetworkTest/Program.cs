@@ -1,10 +1,8 @@
 ﻿using DllNetwork;
-using DllNetwork.Broadcast;
-using DllNetwork.Main;
-using LiteNetLib;
-using NetworkTest.CustomPacket;
+using DllNetwork.Formatters;
 using NetworkTest.Ini;
 using Serilog;
+using System.Net;
 
 namespace NetworkTest;
 
@@ -12,75 +10,41 @@ internal class Program
 {
     static void Main(string[] _)
     {
-        Console.WriteLine("Hello, World!");
-
+        Console.WriteLine("Your IP addresses:");
         foreach (var item in AddressHelper.GetInteraceAddresses())
         {
             Console.WriteLine(item);
         }
-        
-
 
         Shared.MainLogger.LevelSwitch.MinimumLevel = Serilog.Events.LogEventLevel.Verbose;
         Shared.MainLogger.ConsoleLevelSwitch.MinimumLevel = Serilog.Events.LogEventLevel.Verbose;
         Shared.MainLogger.FileLevelSwitch.MinimumLevel = Serilog.Events.LogEventLevel.Verbose;
         Shared.MainLogger.FileName = $"networktest.txt";
         Shared.MainLogger.CreateNew();
-        PacketProcessor.Processor.RegisterNestedType<MessagePacket>();
-        PacketProcessor.Processor.SubscribeNetSerializable<MessagePacket, ReceiveUserData>(MessageWorker);
+
+        Formatters.InitFormatters();
+
         NetworkSettingsIni.Connect();
-        BroadcastManager.Instance.Start();
-        MainManager.Instance.Start();
-        bool Stop = false;
-        Thread thread = new(() =>
-        {
-            while (!Stop)
-            {
-                BroadcastManager.Instance.Update();
-                MainManager.Instance.Update();
-            }
-        }); 
-        MessagePacket message = new();
-        thread.Start();
+        MainNetwork.Instance.Start();
+
         string? readed = null;
         while (readed?.ToLower() != "q")
         {
             readed = Console.ReadLine();
+            MainNetwork.Instance.Update();
             if (readed == null)
                 continue;
             if (readed.Contains("bc"))
             {
-                MainManager.Instance.SendBroadcast();
+                MainNetwork.Instance.BroadcastWork.SendAnnounce();
             }
             if (readed.StartsWith('!') && readed.Contains(' '))
             {
-                Log.Debug("send msg!");
-                try
-                {
-                    var splitted = readed.Split(' ');
-                    var acid = splitted[0].Replace("!", string.Empty);
-                    var msg = splitted[1..];
-                    message.Message = string.Join(" ", msg);
-                    Log.Debug("Account: {0}", acid);
-                    Log.Debug("sending! {0}", message.Message);
-                    MainManager.SendToAccount(acid, ref message);
-                    Log.Debug("sent!");
-                }
-                catch (Exception ex)
-                {
-                    Log.Error("Error! {er}", ex);
-                }
 
             }
         }
-        Stop = true;
-        thread.Join(10);
-        MainManager.Instance.Stop();
-        BroadcastManager.Instance.Stop();
+        MainNetwork.Instance.Stop();
     }
 
-    private static void MessageWorker(MessagePacket packet, ReceiveUserData data)
-    {
-        Log.Information("Message got: {msg} from {data}", packet.Message, data);
-    }
+
 }

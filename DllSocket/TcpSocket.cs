@@ -1,0 +1,129 @@
+﻿using System.Net;
+using System.Net.Sockets;
+
+namespace DllSocket;
+
+public class TcpSocket(bool enableIpv6 = true) : CoreSocket(SocketType.Stream, ProtocolType.Tcp, enableIpv6)
+{
+    private bool isListening;
+    public event Action<Socket>? OnAccepted;
+    public readonly List<Socket> AcceptedSockets = [];
+
+    public void Connect(IPAddress address, int port)
+    {
+        if (socketv4 == null) return;
+        try
+        {
+            if (address.AddressFamily == AddressFamily.InterNetwork)
+                socketv4.BeginConnect(address, port, socketv4.EndConnect, socketv4);
+
+            if (EnableIpv6 && socketv6 != null && address.AddressFamily == AddressFamily.InterNetworkV6)
+                socketv6.BeginConnect(address, port, socketv6.EndConnect, socketv6);
+        }
+        catch (Exception ex)
+        {
+            InvokeException(ex);
+        }
+    }
+
+    public void Disconnect()
+    {
+        if (socketv4 == null) return;
+        try
+        {
+            if (socketv4.Connected)
+                socketv4.BeginDisconnect(true, socketv4.EndDisconnect, socketv4);
+
+            if (EnableIpv6 && socketv6 != null && socketv6.Connected)
+                socketv6.BeginDisconnect(true, socketv6.EndDisconnect, socketv6);
+        }
+        catch (Exception ex)
+        {
+            InvokeException(ex);
+        }
+    }
+
+    protected override void OnSocketBind()
+    {
+        if (socketv4 == null) return;
+        
+        socketv4.Listen();
+
+        if (EnableIpv6 && socketv6 != null)
+            socketv6.Listen();
+
+        isListening = true;
+    }
+
+    public override void Update()
+    {
+        if (!isListening) return;
+        if (socketv4 == null) return;
+        try
+        {
+            socketv4.BeginAccept(ar =>
+            {
+                try
+                {
+                    Socket acceptedSocket = socketv4.EndAccept(ar);
+                    if (acceptedSocket == null) return;
+                    OnSocketAdded(acceptedSocket);
+                }
+                catch (Exception ex)
+                {
+                    if (ex is SocketException socketException && socketException.SocketErrorCode == SocketError.OperationAborted)
+                        return;
+                    InvokeException(ex);
+                }
+            }, socketv4);
+
+            if (EnableIpv6 && socketv6 != null)
+            {
+                socketv6.BeginAccept(ar =>
+                {
+                    try
+                    {
+                        Socket acceptedSocket = socketv6.EndAccept(ar);
+                        if (acceptedSocket == null) return;
+                        OnSocketAdded(acceptedSocket);
+                    }
+                    catch (Exception ex)
+                    {
+                        if (ex is SocketException socketException && socketException.SocketErrorCode == SocketError.OperationAborted)
+                            return;
+                        InvokeException(ex);
+                    }
+                }, socketv6);
+            }
+        }
+        catch (Exception ex)
+        {
+            InvokeException(ex);
+        }
+
+        base.Update();
+    }
+
+    protected virtual void OnSocketAdded(Socket socket)
+    {
+        socket.Blocking = false;
+        socket.NoDelay = true;
+        AcceptedSockets.Add(socket);
+        OnAccepted?.Invoke(socket);
+    }
+
+    public ValueTask<int> Send(Socket socket, ReadOnlyMemory<byte> data, SocketFlags flags = SocketFlags.None)
+    {
+        if (socket == null) return ValueTask.FromResult(-1);
+
+        try
+        {
+            return socket.SendAsync(data, flags);
+        }
+        catch (Exception ex)
+        {
+            InvokeException(ex);
+        }
+        return ValueTask.FromResult(-1);
+    }
+}

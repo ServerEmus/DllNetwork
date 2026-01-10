@@ -15,7 +15,7 @@ public static class AddressHelper
         return networkInterface.GetIPProperties().UnicastAddresses.Count > 0;
     }
 
-    private static void GetIpAddress(IPInterfaceProperties properties, ref List<string> ips)
+    private static void GetIpAddress(IPInterfaceProperties properties, ref List<IPAddress> ips)
     {
         foreach (UnicastIPAddressInformation unicastAddress in properties.UnicastAddresses)
         {
@@ -24,14 +24,14 @@ public static class AddressHelper
                 continue;
             if (address.AddressFamily is AddressFamily.InterNetwork or AddressFamily.InterNetworkV6)
             {
-                ips.Add(address.ToString());
+                ips.Add(address);
             }
         }
     }
 
-    public static List<string> GetInteraceAddresses()
+    public static List<IPAddress> GetInteraceAddresses()
     {
-        List<string> addresses = [];
+        List<IPAddress> addresses = [];
         try
         {
             var interfaces = NetworkInterface.GetAllNetworkInterfaces().Where(WhereCheck);
@@ -46,8 +46,26 @@ public static class AddressHelper
         }
 
         if (addresses.Count == 0)
-            addresses.Add("127.0.0.1");
+            addresses.Add(IPAddress.Loopback);
 
         return addresses;
+    }
+
+    public static bool IsPortInUse(int port, bool isTcp = true)
+    {
+        IPGlobalProperties properties = IPGlobalProperties.GetIPGlobalProperties();
+        IPEndPoint[] listeners = isTcp ? properties.GetActiveTcpListeners() : properties.GetActiveUdpListeners();
+
+        return listeners.Any(x => x.Port == port);
+    }
+
+    public static int GetPort(int startPort = 7777, int endPort = 8000, bool isTcp = true)
+    {
+        for (int port = startPort; port < endPort; port++)
+        {
+            if (!IsPortInUse(port, isTcp))
+                return port;
+        }
+        return 0;
     }
 }

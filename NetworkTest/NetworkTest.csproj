@@ -18,4 +18,8 @@
   <ItemGroup>
     <ProjectReference Include="..\DllNetwork\DllNetwork.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="CustomPacket\" />
+  </ItemGroup>
 </Project>

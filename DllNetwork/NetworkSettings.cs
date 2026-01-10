@@ -22,11 +22,6 @@ public class NetworkSettings
     }
 
     /// <summary>
-    /// Gets or sets the settings that determine which content types are accepted in requests or responses.
-    /// </summary>
-    public AcceptSettings Accept { get; set; } = new();
-
-    /// <summary>
     /// Gets or sets the account configuration settings.
     /// </summary>
     public AccountConfig Account { get; set; } = new();
@@ -45,47 +40,29 @@ public class NetworkSettings
     /// Gets or sets the binding configuration settings used for communication and data transfer.
     /// </summary>
     public BindingSettings Binding { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets the connection configuration settings.
+    /// </summary>
+    public ConnectionSettings Connection { get; set; } = new();
 }
 
 /// <summary>
-/// Represents configuration options for accepting or rejecting incoming connections.
+/// Represents the configuration settings for network connections.
 /// </summary>
-public class AcceptSettings
+public class ConnectionSettings
 {
     /// <summary>
-    /// Accepts all connections.
+    /// Gets or sets the handshake key used to establish a secure connection.
     /// </summary>
-    public bool AcceptAll { get; set; } = true;
-
-    /// <summary>
-    /// Accept only with this key.
-    /// </summary>
-    /// <remarks>
-    /// This overrides <see cref="AcceptAll"/>.
-    /// </remarks>
-    public string AcceptKey { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Reject message in hex string format.
-    /// </summary>
-    public string RejectHexString { get; set; } = string.Empty;
+    public string HandshakeKey { get; set; } = string.Empty;
 }
 
 /// <summary>
-/// Represents configuration settings for a manager, including channel count, statistics, and network options.
+/// Represents configuration settings for a manager.
 /// </summary>
 public class ManagerSettings
 {
-    /// <summary>
-    /// Gets or sets the number of channels supported.
-    /// </summary>
-    public byte ChannelCount { get; set; } = 32;
-
-    /// <summary>
-    /// Gets or sets a value indicating whether statistical analysis is enabled.
-    /// </summary>
-    public bool UseStatistics { get; set; }
-
     /// <summary>
     /// Gets or sets a value indicating whether IPv6 is enabled for network operations.
     /// </summary>
@@ -102,7 +79,10 @@ public class BroadcastSettings
     /// </summary>
     public int BroadcastPort { get; set; } = 5555;
 
-    public List<int> FallbackBroadcastPorts { get; set; } = [];
+    /// <summary>
+    /// Gets or sets the ending port number of the broadcast port range.
+    /// </summary>
+    public int EndRangeBroadcastPort { get; set; } = 5560;
 }
 
 /// <summary>
