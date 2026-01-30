@@ -1,33 +1,36 @@
-﻿using MemoryPack;
+﻿using EIVPack;
+using EIVPack.Formatters;
 using System.Net;
 
 namespace DllNetwork.Formatters;
 
-public class IPAddressFormatter : MemoryPackFormatter<IPAddress>
+public class IPAddressFormatter : IFormatter<IPAddress>
 {
-    public static IPAddressFormatter Instance { get; } = new();
-    public override void Deserialize(ref MemoryPackReader reader, scoped ref IPAddress? value)
+    public void Deserialize(ref PackReader reader, scoped ref IPAddress? value)
     {
-        if (!reader.TryReadObjectHeader(out byte header) || header != 1)
+        if (!reader.TryReadSmallHeader(out byte len) || len != 1)
         {
             value = null;
             return;
         }
-
-        byte[]? bytes = reader.ReadUnmanagedArray<byte>();
-        if (bytes != null)
-            value = new(bytes);
+        byte[]? data = reader.ReadArray<byte>();
+        if (data == null)
+        {
+            value = null; 
+            return;
+        }
+        value = new(data);
     }
 
-    public override void Serialize<TBufferWriter>(ref MemoryPackWriter<TBufferWriter> writer, scoped ref IPAddress? value)
+    public void Serialize(ref PackWriter writer, scoped ref readonly IPAddress? value)
     {
         if (value == null)
         {
-            writer.WriteNullObjectHeader();
+            writer.WriteSmallHeader();
             return;
-        }        
+        }
 
-        writer.WriteObjectHeader(1);
-        writer.WriteUnmanagedArray(value.GetAddressBytes());
+        writer.WriteSmallHeader(1);
+        writer.WriteArray(value.GetAddressBytes());
     }
 }

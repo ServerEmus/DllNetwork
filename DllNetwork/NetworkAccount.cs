@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Net;
 
 namespace DllNetwork;
 
@@ -53,7 +54,7 @@ public class NetworkAccount
     }
 
 
-    public static bool TryGetAccount(string accountId, out NetworkAccount? account)
+    public static bool TryGetAccount(string accountId, [NotNullWhen(true)] out NetworkAccount? account)
     {
         return Accounts.TryGetValue(accountId, out account);
     }
@@ -69,7 +70,7 @@ public class NetworkAccount
         return addresses.Count != 0;
     }
 
-    public static bool TryGetFirstAddress(string accountId, out IPAddress? address)
+    public static bool TryGetFirstAddress(string accountId, [NotNullWhen(true)] out IPAddress? address)
     {
         address = null;
         if (Accounts.TryGetValue(accountId, out var account))
@@ -88,6 +89,46 @@ public class NetworkAccount
             return true;
         }
         return false;
+    }
+
+    public static bool TryGetFromAddress(IPEndPoint endPoint, PortType portType, [NotNullWhen(true)] out string accountId)
+    {
+        accountId = string.Empty;
+        int endpointPort = endPoint.Port;
+        IPAddress address = endPoint.Address;
+
+        foreach (var account in Accounts)
+        {
+            int port = account.Value.Port.GetPort(portType);
+            if (port != endpointPort)
+                continue;
+
+            if (!account.Value.NetworkAddresses.Contains(address))
+                continue;
+
+            accountId = account.Key;
+        }
+
+        return accountId != string.Empty;
+    }
+
+    public static bool TryGetEndpoint(string accountId, PortType portType, [NotNullWhen(true)] out IPEndPoint? endPoint)
+    {
+        endPoint = null;
+
+        if (!TryGetAccount(accountId, out NetworkAccount? account))
+            return false;
+
+        IPAddress? ip = account.NetworkAddresses.FirstOrDefault();
+        if (ip == null)
+            return false;
+
+        int port = account.Port.GetPort(portType);
+        if (port == 0)
+            return false;
+
+        endPoint = new(ip, port);
+        return true;
     }
 
     public string AccountId { get; private set; } = string.Empty;

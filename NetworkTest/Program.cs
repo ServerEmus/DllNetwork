@@ -21,9 +21,7 @@ internal class Program
         Shared.MainLogger.FileLevelSwitch.MinimumLevel = Serilog.Events.LogEventLevel.Verbose;
         Shared.MainLogger.FileName = $"networktest.txt";
         Shared.MainLogger.CreateNew();
-
-        Formatters.InitFormatters();
-
+        Formatters.RegisterAll();
         NetworkSettingsIni.Connect();
         MainNetwork.Instance.Start();
 

@@ -1,16 +1,26 @@
-﻿using MemoryPack;
+﻿using EIVPack;
+using EIVPack.Formatters;
 using System.Net;
 
 namespace DllNetwork.Formatters;
 
 public static class Formatters
 {
-    public static void InitFormatters()
+    public static void RegisterAll()
     {
-        if (!MemoryPackFormatterProvider.IsRegistered<INetworkPacket>())
-            MemoryPackFormatterProvider.Register(INetworkPacketFormatter.Instance);
+        if (!FormatterProvider.IsRegistered<IPAddress>())
+        {
+            FormatterProvider.Register(new IPAddressFormatter());
+        }
 
-        if (!MemoryPackFormatterProvider.IsRegistered<IPAddress>())
-            MemoryPackFormatterProvider.Register(IPAddressFormatter.Instance);
+        if (!FormatterProvider.IsRegistered<List<IPAddress>>())
+        {
+            FormatterProvider.Register(new ListFormatter<IPAddress>());
+        }
+
+        if (!FormatterProvider.IsRegistered<INetworkPacket>())
+        {
+            FormatterProvider.Register(INetworkPacketFormatter.Instance);
+        }
     }
 }

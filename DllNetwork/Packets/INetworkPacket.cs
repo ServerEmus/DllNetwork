@@ -1,6 +1,14 @@
-﻿using MemoryPack;
+﻿namespace DllNetwork.Packets;
 
-namespace DllNetwork.Packets;
+public interface INetworkPacket
+{
+    public byte PacketId { get; }
+}
 
-[MemoryPackable(GenerateType.NoGenerate)]
-public partial interface INetworkPacket;
+
+public enum PacketIdType : byte
+{
+    None = 0,
+    Announce = 1,
+    Handshake = 2,
+}

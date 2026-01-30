@@ -1,14 +1,30 @@
-﻿using DllSocket;
+﻿using DllNetwork.PacketProcessors;
+using DllSocket;
 using Serilog;
 using System.Buffers;
 using System.Net;
 
 namespace DllNetwork;
 
-public class BroadcastWork(BroadcastSocket socket)
+public class BroadcastWork
 {
-    private readonly BroadcastSocket broadcastSocket = socket;
+    private readonly HandshakePacket Handshake;
+    private readonly BroadcastSocket broadcastSocket;
+
+
+    public BroadcastWork(BroadcastSocket socket)
+    {
+        broadcastSocket = socket;
+        Handshake = new()
+        {
+            AccountId = MainNetwork.Instance.settings.Account.AccountId,
+            HandshakeKey = MainNetwork.Instance.settings.Connection.HandshakeKey
+        };
+    }
+
     public AnnouncePacket? AnnouncePacket = new();
+
+
     public void BroadcastUpdate()
     {
         int av = broadcastSocket.Available;
@@ -74,23 +90,16 @@ public class BroadcastWork(BroadcastSocket socket)
         await broadcastSocket.Send(data, new IPEndPoint(IPAddress.Broadcast, MainNetwork.Instance.NetworkPorts.BroadcastPort));
     }
 
-    private static async Task ConnectAsyncWork(AnnouncePacket announcePacket, List<Task> tasks)
+    private async Task ConnectAsyncWork(AnnouncePacket announcePacket, List<Task> tasks)
     {
-
         await Task.WhenAll(tasks);
 
-        if (NetworkAccount.TryGetAddress(announcePacket.AccountId, out var addresses))
+        if (NetworkAccount.TryGetEndpoint(announcePacket.AccountId, PortType.Udp, out var endPoint))
         {
-            // If we have multiple addresses we connect to the one with the lowest ping (Which should be the first!)
-
-            // If we have no address to connect to (how would that even happen??) we send warning.
-            if (addresses.Count == 0)
-            {
-                Log.Warning("No addresses to connect to for account {Acc}", announcePacket.AccountId);
-                return;
-            }
-
+            MainProcessor.DenyProcessingEndpoints.Remove(endPoint);
         }
+
+        MainNetwork.Instance.UdpWork.Send(Handshake, announcePacket.AccountId);
     }
 
     public void SendAnnounce()

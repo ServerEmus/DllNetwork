@@ -8,8 +8,6 @@ public class MainNetwork
 {
     public static MainNetwork Instance { get; } = new();
     public PortStruct NetworkPorts { get; private set; }
-    public readonly BroadcastWork BroadcastWork;
-    public readonly UdpWork UdpWork;
 
     public readonly NetworkSettings settings;
     public readonly bool Ipv6Enabled;
@@ -20,6 +18,9 @@ public class MainNetwork
 
     internal readonly List<SocketAddress> SocketAddresses = [];
     internal readonly List<IPAddress> MyIpAddresses = [];
+
+    public BroadcastWork BroadcastWork { get; private set; } = default!;
+    public UdpWork UdpWork { get; private set; } = default!;
 
     internal MainNetwork()
     {
@@ -38,8 +39,6 @@ public class MainNetwork
             SocketAddresses.Add(new IPEndPoint(IPAddress.Broadcast, i).Serialize());
         }
         MyIpAddresses = AddressHelper.GetInteraceAddresses();
-        BroadcastWork = new(broadcast);
-        UdpWork = new(udp);
     }
 
     private void Udp_OnException(Exception obj)
@@ -59,6 +58,9 @@ public class MainNetwork
 
     public void Start()
     {
+        BroadcastWork = new(broadcast);
+        UdpWork = new(udp);
+
         broadcast.Start();
         int broadcastPort = AddressHelper.GetPort(settings.Broadcast.BroadcastPort, settings.Broadcast.EndRangeBroadcastPort, false);
         IPEndPoint broadCastEndPoint = new(IPAddress.Parse(settings.Binding.BindIpv4), broadcastPort);

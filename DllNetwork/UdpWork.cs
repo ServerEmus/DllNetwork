@@ -1,4 +1,5 @@
-﻿using DllSocket;
+﻿using DllNetwork.PacketProcessors;
+using DllSocket;
 using Serilog;
 using System.Net;
 
@@ -8,11 +9,11 @@ public class UdpWork(UdpSocket socket)
 {
     private readonly UdpSocket udp = socket;
     public Memory<byte> ReceiveBuffer = new byte[CoreSocket.BufferSize];
-    private IPEndPoint SenderEndPoint = new(IPAddress.Any, 0);
+    private readonly IPEndPoint SenderEndPoint = new(IPAddress.Any, 0);
 
     public void UdpReceive()
     {
-        EndPoint receive = Constants.ReceiveEndpointV4;
+        IPEndPoint receive = Constants.ReceiveEndpointV4;
         int available = 0;
         if (udp.EnableIpv6 && udp.socketv6 != null)
         {
@@ -37,31 +38,12 @@ public class UdpWork(UdpSocket socket)
                 }
                 var receiveFromResult = completedTask.Result;
                 Log.Information("Bytes {len} received from {address} (or {address2})", receiveFromResult.ReceivedBytes, receive, receiveFromResult.RemoteEndPoint);
-                var bytes = ReceiveBuffer.Span[..receiveFromResult.ReceivedBytes];
-                Log.Debug("Received bytes in buffer: {buffer}", Convert.ToHexString(bytes));
-                ReceiveProcess(bytes, receive);
+
+                if (!MainProcessor.CanProcess(receive, out string accountId))
+                    return;
+
+                MainProcessor.ReceiveProcess(ReceiveBuffer[..receiveFromResult.ReceivedBytes], receive, accountId);
             });
-    }
-
-
-    private void ReceiveProcess(Span<byte> bytes, EndPoint remoteEndPoint)
-    {
-        var packet = MemoryPackExt.Deserialize<INetworkPacket>(bytes);
-        if (packet == null)
-        {
-            Log.Warning("Failed to deserialize packet from {endpoint}", remoteEndPoint);
-            return;
-        }
-
-        switch (packet)
-        {
-            case HandshakePacket handshakePacket:
-                Log.Information("Received HandshakePacket from {endpoint}", remoteEndPoint);
-                // Process HandshakePacket
-                break;
-            default:
-                break;
-        }
     }
 
     public void Send<T>(T packet, string accountId) where T : INetworkPacket
@@ -86,10 +68,9 @@ public class UdpWork(UdpSocket socket)
             {
                 if (!completedTask.IsCompletedSuccessfully)
                 {
-                    Log.Information("Task failed!");
+                    Log.Error("Packet could not be sent! {Ex}", completedTask.Exception);
                     return;
                 }
-
             });
     }
 }

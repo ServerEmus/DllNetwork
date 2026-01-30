@@ -4,9 +4,9 @@ namespace DllNetwork;
 
 public static class Constants
 {
-    public const int Version = 1;
-    public const int MinSupportedVersion = 1;
-    public static readonly EndPoint ReceiveEndpointV4 = new IPEndPoint(IPAddress.Any, 0);
-    public static readonly EndPoint ReceiveEndpointV6 = new IPEndPoint(IPAddress.IPv6Any, 0);
+    public const uint DLL_VERSION = 1;
+    public const uint DLL_MIN_SUPPORTED_VERSION = 1;
+    public static readonly IPEndPoint ReceiveEndpointV4 = new(IPAddress.Any, 0);
+    public static readonly IPEndPoint ReceiveEndpointV6 = new(IPAddress.IPv6Any, 0);
 
 }
