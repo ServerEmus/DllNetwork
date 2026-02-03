@@ -14,8 +14,10 @@ public static class HandshakePacketProcessor
         if (packet.Version < Constants.DLL_MIN_SUPPORTED_VERSION)
         {
             Log.Warning("Version no longer supported!");
-            MainProcessor.DenyProcessingEndpoints.Add(endPoint);
+            MainProcessor.TimeoutProcessingEndpoints.Add(endPoint, 2);
             // we should reply with answer packet that "hey you using non compatible version!"
         }
+
+
     }
 }

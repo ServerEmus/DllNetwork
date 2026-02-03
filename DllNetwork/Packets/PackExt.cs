@@ -1,4 +1,4 @@
-﻿using EIVPack;
+﻿using EIV_Pack;
 using System.Diagnostics.CodeAnalysis;
 
 namespace DllNetwork.Packets;

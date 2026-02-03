@@ -5,6 +5,8 @@ namespace DllNetwork.PacketProcessors;
 
 public static class MainProcessor
 {
+    public static readonly Dictionary<IPEndPoint, int> TimeoutProcessingEndpoints = [];
+
     public static readonly List<IPEndPoint> DenyProcessingEndpoints = [];
 
     public static bool CanProcess(IPEndPoint endPoint, out string accountId)
@@ -13,6 +15,18 @@ public static class MainProcessor
         if (DenyProcessingEndpoints.Contains(endPoint))
         {
             Log.Debug("{receive} is in the Deny list, we not process anything!", endPoint);
+            return false;
+        }
+
+        if (TimeoutProcessingEndpoints.TryGetValue(endPoint, out int TimeOutCheck))
+        {
+            Log.Debug("{receive} is in the TimeOut list, we not process anything!", endPoint);
+            if (TimeOutCheck == 0)
+            {
+                TimeoutProcessingEndpoints.Remove(endPoint);
+                return false;
+            }
+            TimeoutProcessingEndpoints[endPoint]--;
             return false;
         }
 

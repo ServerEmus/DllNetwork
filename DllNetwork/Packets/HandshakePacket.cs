@@ -1,10 +1,10 @@
 ﻿using DllNetwork.Formatters;
-using EIVPack;
-using EIVPack.Formatters;
+using EIV_Pack;
 
 namespace DllNetwork.Packets;
 
-public class HandshakePacket : INetworkPacket, IPackable<HandshakePacket>, IFormatter<HandshakePacket>
+[EIV_Packable]
+public partial class HandshakePacket : INetworkPacket
 {
     public byte PacketId => (byte)PacketIdType.Handshake;
     /// <summary>
@@ -47,56 +47,5 @@ public class HandshakePacket : INetworkPacket, IPackable<HandshakePacket>, IForm
 
         HandshakePacket? packet = (HandshakePacket?)value;
         SerializePackable(ref writer, in packet);
-    }
-    public static void RegisterFormatter()
-    {
-        if (!FormatterProvider.IsRegistered<HandshakePacket>())
-        {
-            FormatterProvider.Register(new HandshakePacket());
-        }
-
-        if (!FormatterProvider.IsRegistered<HandshakePacket[]>())
-        {
-            FormatterProvider.Register(new ArrayFormatter<HandshakePacket>());
-        }
-    }
-
-    public static void DeserializePackable(ref PackReader reader, scoped ref HandshakePacket? value)
-    {
-        if (!reader.TryReadSmallHeader(out byte header) || header != 3)
-        {
-            value = null;
-            return;
-        }
-
-        value ??= new();
-
-        value.Version = reader.ReadUnmanaged<uint>();
-        value.AccountId = reader.ReadString()!;
-        value.HandshakeKey = reader.ReadString()!;
-    }
-
-    public static void SerializePackable(ref PackWriter writer, scoped ref readonly HandshakePacket? value)
-    {
-        if (value == null)
-        {
-            writer.WriteSmallHeader();
-            return;
-        }
-
-        writer.WriteSmallHeader(3);
-        writer.WriteUnmanaged(value.Version);
-        writer.WriteString(value.AccountId);
-        writer.WriteString(value.HandshakeKey);
-    }
-
-    public void Deserialize(ref PackReader reader, scoped ref HandshakePacket? value)
-    {
-        DeserializePackable(ref reader, ref value);
-    }
-
-    public void Serialize(ref PackWriter writer, scoped ref readonly HandshakePacket? value)
-    {
-        SerializePackable(ref writer, in value);
     }
 }

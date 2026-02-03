@@ -1,5 +1,5 @@
-﻿using EIVPack;
-using EIVPack.Formatters;
+﻿using EIV_Pack;
+using EIV_Pack.Formatters;
 
 namespace DllNetwork.Formatters;
 
