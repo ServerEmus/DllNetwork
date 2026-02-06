@@ -66,7 +66,7 @@ public class MainNetwork
     public void Start()
     {
         BroadcastWork = new(broadcast);
-        UdpWork = new(udp, settings.Manager.MaxQueueSize);
+        UdpWork = new(udp, settings.Manager.MaxQueueSize, settings.Manager.HearthbeatInterval);
 
         broadcast.Start();
         int broadcastPort = AddressHelper.GetPort(settings.Broadcast.BroadcastPort, settings.Broadcast.EndRangeBroadcastPort, false);
