@@ -8,13 +8,13 @@ public partial class HeartBeatPacket : INetworkPacket
 {
     public byte PacketId => (byte)PacketIdType.Heartbeat;
 
-    public DateTimeOffset SentTime { get; set; } = DateTimeOffset.UtcNow;
+    public DateTime SentTime { get; set; } = DateTime.UtcNow;
 
     static HeartBeatPacket()
     {
+        FormatterProvider.Register<HeartBeatPacket>();
         INetworkPacketFormatter.Instance.WritePacket += Instance_WritePacket;
         INetworkPacketFormatter.Instance.GetPacket += Instance_GetPacket;
-        FormatterProvider.Register<HeartBeatPacket>();
     }
 
     private static void Instance_GetPacket(byte PacketId, ref PackReader reader, scoped ref INetworkPacket? value)
@@ -22,8 +22,8 @@ public partial class HeartBeatPacket : INetworkPacket
         if (PacketId != (byte)PacketIdType.Heartbeat)
             return;
 
-        HeartBeatPacket packet = new();
-        DeserializePackable(ref reader, ref packet!);
+        HeartBeatPacket? packet = null;
+        DeserializePackable(ref reader, ref packet);
         value = packet;
     }
 

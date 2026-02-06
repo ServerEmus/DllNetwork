@@ -16,9 +16,9 @@ public partial class AnnouncePacket : INetworkPacket
 
     static AnnouncePacket()
     {
+        FormatterProvider.Register<AnnouncePacket>();
         INetworkPacketFormatter.Instance.WritePacket += Instance_WritePacket;
         INetworkPacketFormatter.Instance.GetPacket += Instance_GetPacket;
-        FormatterProvider.Register<AnnouncePacket>();
     }
 
     private static void Instance_GetPacket(byte PacketId, ref PackReader reader, scoped ref INetworkPacket? value)
@@ -26,8 +26,8 @@ public partial class AnnouncePacket : INetworkPacket
         if (PacketId != (byte)PacketIdType.Announce)
             return;
 
-        AnnouncePacket packet = new();
-        DeserializePackable(ref reader, ref packet!);
+        AnnouncePacket? packet = null;
+        DeserializePackable(ref reader, ref packet);
         value = packet;
     }
 

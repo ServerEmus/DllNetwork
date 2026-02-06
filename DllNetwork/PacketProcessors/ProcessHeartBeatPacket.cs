@@ -16,8 +16,8 @@ public static partial class Processors
             }
 
             double timeDiff = (lastHearthBeatReceived - heartBeatPacket.SentTime).TotalSeconds;
-            Log.Debug("HB debug {timediff} {time1} {time2}", timeDiff, lastHearthBeatReceived, heartBeatPacket.SentTime);
-            if (timeDiff > 5)
+            Log.Debug("HB debug {timediff} {time1:s} {time2:s}", timeDiff, lastHearthBeatReceived, heartBeatPacket.SentTime);
+            if (timeDiff > udpWork.HearthBeatInterval)
             {
                 // Send immidietly without any queueing!
                 udpWork.Send(new HeartBeatPacket()

@@ -21,9 +21,9 @@ public partial class ConnectPacket : INetworkPacket
 
     static ConnectPacket()
     {
+        FormatterProvider.Register<ConnectPacket>();
         INetworkPacketFormatter.Instance.WritePacket += Instance_WritePacket;
         INetworkPacketFormatter.Instance.GetPacket += Instance_GetPacket;
-        FormatterProvider.Register<ConnectPacket>();
     }
 
     private static void Instance_GetPacket(byte PacketId, ref PackReader reader, scoped ref INetworkPacket? value)
@@ -31,8 +31,8 @@ public partial class ConnectPacket : INetworkPacket
         if (PacketId != (byte)PacketIdType.Connect)
             return;
 
-        ConnectPacket packet = new();
-        DeserializePackable(ref reader, ref packet!);
+        ConnectPacket? packet = null;
+        DeserializePackable(ref reader, ref packet);
         value = packet;
     }
 

@@ -6,15 +6,18 @@ using System.Net;
 
 namespace DllNetwork.SocketWorkers;
 
-public class UdpWork(UdpSocket socket, int maxPacketQueue) : ISocketWorker
+public class UdpWork(UdpSocket socket, int maxPacketQueue, byte hearthBeatInterval) : ISocketWorker
 {
     public PortType PortType => PortType.Udp;
     public CoreSocket Socket => udp;
 
-    public static readonly Queue<KeyValuePair<INetworkPacket, string>> PacketQueue = new();
-    public static readonly Dictionary<string, DateTimeOffset> LastHeartBeatReceived = [];
 
-    private static readonly List<(HeartBeatPacket, DateTimeOffset, string)> HeartBeatSendList = [];
+    public static readonly Queue<KeyValuePair<INetworkPacket, string>> PacketQueue = new();
+    public static readonly Dictionary<string, DateTime> LastHeartBeatReceived = [];
+
+    public readonly byte HearthBeatInterval = hearthBeatInterval;
+
+    private static readonly List<(HeartBeatPacket, DateTime, string)> HeartBeatSendList = [];
 
     private readonly int MaxPacketQueue = maxPacketQueue;
     private readonly UdpSocket udp = socket;
@@ -53,12 +56,18 @@ public class UdpWork(UdpSocket socket, int maxPacketQueue) : ISocketWorker
                     return;
                 }
                 var receiveFromResult = completedTask.Result;
-                Log.Information("Bytes {len} received from {address} (or {address2})", receiveFromResult.ReceivedBytes, receive, receiveFromResult.RemoteEndPoint);
+                Log.Information("Bytes {len} received from ({address2})", receiveFromResult.ReceivedBytes, receiveFromResult.RemoteEndPoint);
 
-                if (!MainProcessor.CanProcess(receive, out string accountId))
+                if (receiveFromResult.RemoteEndPoint is not IPEndPoint endPoint)
+                {
+                    Log.Debug("Remote is not IPEndPoint, it is type: {type}",receiveFromResult.RemoteEndPoint.GetType());
+                    return;
+                }
+
+                if (!MainProcessor.CanProcess(endPoint, out string accountId))
                     return;
 
-                MainProcessor.ReceiveProcess(this, ReceiveBuffer[..receiveFromResult.ReceivedBytes], receive, accountId);
+                MainProcessor.ReceiveProcess(this, ReceiveBuffer[..receiveFromResult.ReceivedBytes], endPoint, accountId);
             });
     }
 
@@ -75,12 +84,12 @@ public class UdpWork(UdpSocket socket, int maxPacketQueue) : ISocketWorker
             if (packet.Key is HeartBeatPacket heartBeatPacket)
             {
                 var sentTime = heartBeatPacket.SentTime;
-                var now = DateTimeOffset.UtcNow;
+                var now = DateTime.UtcNow;
                 var timeDiff = (now - sentTime).TotalSeconds;
-                Log.Debug("HB debug2 {timediff} {time1} {time2}", timeDiff, now, sentTime);
-                if ((now - sentTime).Seconds < 5)
+                Log.Debug("HB debug2 {timediff} {time1:s} {time2:s}", timeDiff, now, sentTime);
+                if ((now - sentTime).Seconds < HearthBeatInterval)
                 {
-                    HeartBeatSendList.Add((heartBeatPacket, DateTimeOffset.UtcNow.AddSeconds(5), packet.Value));
+                    HeartBeatSendList.Add((heartBeatPacket, DateTime.UtcNow.AddSeconds(HearthBeatInterval), packet.Value));
                     continue;
                 }
             }
@@ -91,10 +100,10 @@ public class UdpWork(UdpSocket socket, int maxPacketQueue) : ISocketWorker
         for (int i = 0; i < HeartBeatSendList.Count; i++)
         {
             var hb = HeartBeatSendList[i];
-            var now = DateTimeOffset.UtcNow;
+            var now = DateTime.UtcNow;
             var timeDiff = (now - hb.Item2).TotalSeconds;
-            Log.Debug("HB debug3 {timediff} {time1} {time2}", timeDiff, now, hb.Item2);
-            if ((now - hb.Item2).Seconds < 5)
+            Log.Debug("HB debug3 {timediff} {time1:s} {time2:s}", timeDiff, now, hb.Item2);
+            if (now > hb.Item2)
             {
                 Send(hb.Item1, hb.Item3);
                 HeartBeatSendList.RemoveAt(i);
@@ -125,6 +134,7 @@ public class UdpWork(UdpSocket socket, int maxPacketQueue) : ISocketWorker
 
         SenderEndPoint.Address = address;
         SenderEndPoint.Port = port.UdpPort;
+        Log.Debug("Sending packet {packet} to address: {address} ({acc})", bytes, SenderEndPoint, accountId);
         udp.Send(bytes, SenderEndPoint).AsTask().
             ContinueWith((completedTask) =>
             {

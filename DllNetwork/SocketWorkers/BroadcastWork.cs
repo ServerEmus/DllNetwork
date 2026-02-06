@@ -2,20 +2,22 @@
 using DllSocket;
 using Serilog;
 using System.Buffers;
+using System.Collections.Concurrent;
 using System.Net;
 
 namespace DllNetwork.SocketWorkers;
 
 public class BroadcastWork : ISocketWorker
 {
-    private readonly ConnectPacket Handshake;
+    private readonly ConnectPacket Connect;
     private readonly BroadcastSocket broadcastSocket;
     private AnnouncePacket? AnnouncePacket = new();
+    private readonly ConcurrentBag<string> AlreadyReceived = [];
 
     public BroadcastWork(BroadcastSocket socket)
     {
         broadcastSocket = socket;
-        Handshake = new()
+        Connect = new()
         {
             HandshakeKey = MainNetwork.Instance.settings.Connection.HandshakeKey
         };
@@ -23,7 +25,6 @@ public class BroadcastWork : ISocketWorker
 
     public PortType PortType => PortType.Broadcast;
     public CoreSocket Socket => broadcastSocket;
-
 
     public void AddPacketQueue(INetworkPacket networkPacket, string userId)
     {
@@ -50,7 +51,6 @@ public class BroadcastWork : ISocketWorker
                     }
                     int actualReceived = completedTask.Result;
                     Log.Information("Bytes {len} received from {address} ", actualReceived, socketAddress);
-                    Log.Debug("Received bytes in pool: {pool}", Convert.ToHexString(pool));
                     if (actualReceived != 0)
                     {
                         pool.Deserialize(ref AnnouncePacket);
@@ -69,6 +69,11 @@ public class BroadcastWork : ISocketWorker
 
         if (announcePacket.AccountId == NetworkSettings.Instance.Account.AccountId)
             return;
+
+        if (AlreadyReceived.Contains(announcePacket.AccountId))
+            return;
+
+        AlreadyReceived.Add(announcePacket.AccountId);
 
         Log.Information("Announce packet: {Ann}", announcePacket);
 
@@ -104,7 +109,8 @@ public class BroadcastWork : ISocketWorker
             MainProcessor.DenyProcessingEndpoints.Remove(endPoint);
         }
 
-        MainNetwork.Instance.UdpWork.Send(Handshake, announcePacket.AccountId);
+        Log.Debug("Sending Connect packet to {accountId} after pinging", announcePacket.AccountId);
+        MainNetwork.Instance.UdpWork.Send(Connect, announcePacket.AccountId);
     }
 
     public void SendAnnounce()

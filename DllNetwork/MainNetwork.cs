@@ -2,6 +2,7 @@
 using DllSocket;
 using Serilog;
 using System.Net;
+using System.Net.Sockets;
 
 namespace DllNetwork;
 
@@ -40,6 +41,11 @@ public class MainNetwork
             SocketAddresses.Add(new IPEndPoint(IPAddress.Broadcast, i).Serialize());
         }
         MyIpAddresses = AddressHelper.GetInteraceAddresses();
+
+        if (!settings.Manager.EnableIpv6)
+        {
+            MyIpAddresses.RemoveAll(x => x.AddressFamily == AddressFamily.InterNetworkV6);
+        }
     }
 
     private void Udp_OnException(Exception obj)

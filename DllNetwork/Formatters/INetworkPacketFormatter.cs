@@ -1,5 +1,6 @@
 ﻿using EIV_Pack;
 using EIV_Pack.Formatters;
+using Serilog;
 
 namespace DllNetwork.Formatters;
 
@@ -20,16 +21,23 @@ public class INetworkPacketFormatter : IFormatter<INetworkPacket>
             return;
         }
 
+        Log.Debug("Deserializing packet with ID {PacketId}", header);
+
         GetPacket?.Invoke(header, ref reader, ref value);
+
+        Log.Debug("Deser value: {val}", value);
     }
 
     public void Serialize(ref PackWriter writer, scoped ref readonly INetworkPacket? value)
     {
+        Log.Debug("value is null? {null}", value == null);
         if (value == null)
         {
             writer.WriteSmallHeader();
             return;
         }
+
+        Log.Debug("Serializing packet with ID {PacketId}", value.PacketId);
 
         writer.WriteSmallHeader(value.PacketId);
         WritePacket?.Invoke(value.PacketId, ref writer, in value);

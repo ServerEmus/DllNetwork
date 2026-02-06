@@ -72,6 +72,11 @@ public class ManagerSettings
     /// Gets or sets the maximum size of the network packet queue.
     /// </summary>
     public int MaxQueueSize { get; set; } = 100;
+
+    /// <summary>
+    /// Gets or sets the interval, in seconds, at which heartbeat messages are sent to maintain active connections.
+    /// </summary>
+    public byte HearthbeatInterval { get; set; } = 5;
 }
 
 /// <summary>

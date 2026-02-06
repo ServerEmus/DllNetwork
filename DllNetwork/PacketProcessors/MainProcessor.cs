@@ -35,6 +35,8 @@ public static class MainProcessor
         if (!NetworkAccount.TryGetFromAddress(endPoint, PortType.Udp, out accountId))
         {
             Log.Warning("{receive} not found in Account storage. We no gonna process any packet from them!", endPoint);
+            // TODO: Add processing queue with this endpoint (they might connect but broadcast was slower than sending message).
+
             return false;
         }
 
@@ -49,11 +51,19 @@ public static class MainProcessor
 
     public static void ReceiveProcess(ISocketWorker socketWorker, Memory<byte> bytes, IPEndPoint remoteEndPoint, string accountId)
     {
-        Log.Debug("Received bytes in buffer: {buffer}", Convert.ToHexString(bytes.ToArray()));
-        var packet = PackExt.Deserialize<INetworkPacket>(bytes);
+        try
+        {
+
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Error {ex} processing packet from {Account} ", ex, accountId);
+        }
+        Log.Debug("Received bytes in buffer: {buffer}", Convert.ToHexString(bytes.Span));
+        var packet = PackExt.DeserializeNetworkPacket(bytes);
         if (packet == null)
         {
-            Log.Warning("Failed to deserialize packet from {Account}", accountId);
+            Log.Warning("Failed to deserialize packet from {Account} {packet} {packet_type}", accountId, packet, packet?.GetType());
             return;
         }
 

@@ -22,5 +22,11 @@ public static class Formatters
         {
             FormatterProvider.Register(INetworkPacketFormatter.Instance);
         }
+
+        // Registering automatically with the cctor:
+        FormatterProvider.Register<AnnouncePacket>();
+        FormatterProvider.Register<ConnectPacket>();
+        FormatterProvider.Register<ConnectReplyPacket>();
+        FormatterProvider.Register<HeartBeatPacket>();
     }
 }

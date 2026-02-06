@@ -34,8 +34,8 @@ public partial class ConnectReplyPacket : INetworkPacket
         if (PacketId != (byte)PacketIdType.ConnectReply)
             return;
 
-        ConnectReplyPacket packet = new();
-        DeserializePackable(ref reader, ref packet!);
+        ConnectReplyPacket? packet = null;
+        DeserializePackable(ref reader, ref packet);
         value = packet;
     }
 
