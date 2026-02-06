@@ -1,5 +1,4 @@
-﻿using Serilog;
-using System.Net;
+﻿using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 
@@ -18,8 +17,6 @@ public static class AddressHelper
 
     private static void GetIpAddress(IPInterfaceProperties properties, ref List<IPAddress> ips)
     {
-
-
         foreach (IPAddress address in properties.UnicastAddresses.Select(x => x.Address)
             .Where(x => !x.IsIPv6LinkLocal && !x.IsIPv6Teredo && (x.AddressFamily == AddressFamily.InterNetwork || x.AddressFamily == AddressFamily.InterNetworkV6)))
         {
@@ -30,17 +27,11 @@ public static class AddressHelper
     public static List<IPAddress> GetInteraceAddresses()
     {
         List<IPAddress> addresses = [];
-        try
+
+        var interfaces = NetworkInterface.GetAllNetworkInterfaces().Where(WhereCheck);
+        foreach (var ipv4 in interfaces)
         {
-            var interfaces = NetworkInterface.GetAllNetworkInterfaces().Where(WhereCheck);
-            foreach (var ipv4 in interfaces)
-            {
-                GetIpAddress(ipv4.GetIPProperties(), ref addresses);
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Error("Error getting interface addresses: {ex}", ex);
+            GetIpAddress(ipv4.GetIPProperties(), ref addresses);
         }
 
         if (addresses.Count == 0)

@@ -55,7 +55,7 @@ public static class MainProcessor
         var packet = PackExt.DeserializeNetworkPacket(bytes);
         if (packet == null)
         {
-            Log.Warning("Failed to deserialize packet from {Account} {packet} {packet_type}", accountId, packet, packet?.GetType());
+            Log.Warning("Failed to deserialize packet from {Account}", accountId);
             return;
         }
 

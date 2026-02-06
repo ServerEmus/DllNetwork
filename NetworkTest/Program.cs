@@ -73,7 +73,7 @@ internal class Program
             }
             if (readed.StartsWith('!') && readed.Contains(' '))
             {
-
+                Console.WriteLine("Here should be message sending!");
             }
         }
         MainNetwork.Instance.Stop();

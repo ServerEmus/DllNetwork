@@ -21,8 +21,32 @@ public class CoreSocket(SocketType socketType, ProtocolType protocolType, bool e
         {
             if (EnableIpv6 && socketv6 != null)
                 return socketv6.Available;
+
             if (socketv4 != null)
                 return socketv4.Available;
+
+            return 0;
+        }
+    }
+
+    public int AvailableV4
+    {
+        get
+        {
+            if (socketv4 != null)
+                return socketv4.Available;
+
+            return 0;
+        }
+    }
+
+    public int AvailableV6
+    {
+        get
+        {
+            if (EnableIpv6 && socketv6 != null)
+                return socketv6.Available;
+
             return 0;
         }
     }
@@ -50,7 +74,7 @@ public class CoreSocket(SocketType socketType, ProtocolType protocolType, bool e
 
             OnSocketStarted();
         }
-        catch (Exception ex)
+        catch (SocketException ex)
         {
             OnException?.Invoke(ex);
         }
@@ -58,8 +82,11 @@ public class CoreSocket(SocketType socketType, ProtocolType protocolType, bool e
 
     public void Bind(EndPoint endPointv4, EndPoint? endPointv6)
     {
-        if (endPointv4 == null) return;
-        if (socketv4 == null) return;
+        if (endPointv4 == null)
+            return;
+
+        if (socketv4 == null)
+            return;
 
         try
         {
@@ -72,7 +99,7 @@ public class CoreSocket(SocketType socketType, ProtocolType protocolType, bool e
 
             OnSocketBind();
         }
-        catch (Exception ex)
+        catch (SocketException ex)
         {
             OnException?.Invoke(ex);
         }
@@ -85,8 +112,14 @@ public class CoreSocket(SocketType socketType, ProtocolType protocolType, bool e
 
     public ValueTask<int> Send(ReadOnlyMemory<byte> data, SocketAddress address, SocketFlags flags = SocketFlags.None)
     {
-        if (address == null) return ValueTask.FromCanceled<int>(CancellationToken.None);
-        if (socketv4 == null) return ValueTask.FromCanceled<int>(CancellationToken.None);
+        if (address == null)
+            return ValueTask.FromCanceled<int>(CancellationToken.None);
+
+        if (socketv4 == null)
+            return ValueTask.FromCanceled<int>(CancellationToken.None);
+
+        if (data.IsEmpty)
+            return ValueTask.FromCanceled<int>(CancellationToken.None);
 
         try
         {
@@ -96,16 +129,21 @@ public class CoreSocket(SocketType socketType, ProtocolType protocolType, bool e
             if (EnableIpv6 && socketv6 != null && address.Family == AddressFamily.InterNetworkV6)
                 return socketv6.SendToAsync(data, flags, address);
         }
-        catch (Exception ex)
+        catch (SocketException ex)
         {
             OnException?.Invoke(ex);
         }
+
         return ValueTask.FromCanceled<int>(CancellationToken.None);
     }
 
     public ValueTask<SocketReceiveFromResult> Receive(Memory<byte> data, EndPoint endPoint, SocketFlags flags = SocketFlags.None)
     {
-        if (socketv4 == null) return ValueTask.FromCanceled<SocketReceiveFromResult>(CancellationToken.None);
+        if (socketv4 == null)
+            return ValueTask.FromCanceled<SocketReceiveFromResult>(CancellationToken.None);
+
+        if (data.IsEmpty)
+            return ValueTask.FromCanceled<SocketReceiveFromResult>(CancellationToken.None);
 
         try
         {
@@ -115,7 +153,11 @@ public class CoreSocket(SocketType socketType, ProtocolType protocolType, bool e
             if (EnableIpv6 && socketv6 != null && endPoint.AddressFamily == AddressFamily.InterNetworkV6)
                 return socketv6.ReceiveFromAsync(data, flags, endPoint);
         }
-        catch (Exception ex)
+        catch (SocketException ex)
+        {
+            OnException?.Invoke(ex);
+        }
+        catch (System.Security.SecurityException ex)
         {
             OnException?.Invoke(ex);
         }
@@ -125,7 +167,11 @@ public class CoreSocket(SocketType socketType, ProtocolType protocolType, bool e
 
     public ValueTask<int> Receive(Memory<byte> data, SocketAddress address, SocketFlags flags = SocketFlags.None)
     {
-        if (socketv4 == null) return ValueTask.FromCanceled<int>(CancellationToken.None);
+        if (socketv4 == null) 
+            return ValueTask.FromCanceled<int>(CancellationToken.None);
+
+        if (data.IsEmpty) 
+            return ValueTask.FromCanceled<int>(CancellationToken.None);
 
         try
         {
@@ -135,7 +181,7 @@ public class CoreSocket(SocketType socketType, ProtocolType protocolType, bool e
             if (EnableIpv6 && socketv6 != null && address.Family == AddressFamily.InterNetworkV6)
                 return socketv6.ReceiveFromAsync(data, flags, address);
         }
-        catch (Exception ex)
+        catch (SocketException ex)
         {
             OnException?.Invoke(ex);
         }
@@ -145,7 +191,11 @@ public class CoreSocket(SocketType socketType, ProtocolType protocolType, bool e
 
     public ValueTask<int> Receive(Memory<byte> data, bool useIpv4 = true)
     {
-        if (socketv4 == null) return ValueTask.FromCanceled<int>(CancellationToken.None);
+        if (socketv4 == null)
+            return ValueTask.FromCanceled<int>(CancellationToken.None);
+
+        if (data.IsEmpty)
+            return ValueTask.FromCanceled<int>(CancellationToken.None);
 
         try
         {
@@ -153,11 +203,9 @@ public class CoreSocket(SocketType socketType, ProtocolType protocolType, bool e
                 return socketv4.ReceiveAsync(data);
 
             if (EnableIpv6 && socketv6 != null)
-                return socketv6.ReceiveAsync(data);
-
-            
+                return socketv6.ReceiveAsync(data);  
         }
-        catch (Exception ex)
+        catch (SocketException ex)
         {
             OnException?.Invoke(ex);
         }

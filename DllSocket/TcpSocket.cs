@@ -11,7 +11,9 @@ public class TcpSocket(bool enableIpv6 = true) : CoreSocket(SocketType.Stream, P
 
     public void Connect(IPAddress address, int port)
     {
-        if (socketv4 == null) return;
+        if (socketv4 == null)
+            return;
+
         try
         {
             if (address.AddressFamily == AddressFamily.InterNetwork)
@@ -28,7 +30,9 @@ public class TcpSocket(bool enableIpv6 = true) : CoreSocket(SocketType.Stream, P
 
     public void Disconnect()
     {
-        if (socketv4 == null) return;
+        if (socketv4 == null)
+            return;
+
         try
         {
             if (socketv4.Connected)
@@ -45,7 +49,8 @@ public class TcpSocket(bool enableIpv6 = true) : CoreSocket(SocketType.Stream, P
 
     protected override void OnSocketBind()
     {
-        if (socketv4 == null) return;
+        if (socketv4 == null)
+            return;
         
         socketv4.Listen();
 
@@ -57,8 +62,12 @@ public class TcpSocket(bool enableIpv6 = true) : CoreSocket(SocketType.Stream, P
 
     public override void Update()
     {
-        if (!isListening) return;
-        if (socketv4 == null) return;
+        if (!isListening)
+            return;
+
+        if (socketv4 == null)
+            return;
+
         try
         {
             socketv4.BeginAccept(ar =>
@@ -69,11 +78,11 @@ public class TcpSocket(bool enableIpv6 = true) : CoreSocket(SocketType.Stream, P
                     if (acceptedSocket == null) return;
                     OnSocketAdded(acceptedSocket);
                 }
-                catch (Exception ex)
+                catch (SocketException socketException)
                 {
-                    if (ex is SocketException socketException && socketException.SocketErrorCode == SocketError.OperationAborted)
+                    if (socketException.SocketErrorCode == SocketError.OperationAborted)
                         return;
-                    InvokeException(ex);
+                    InvokeException(socketException);
                 }
             }, socketv4);
 
@@ -87,16 +96,16 @@ public class TcpSocket(bool enableIpv6 = true) : CoreSocket(SocketType.Stream, P
                         if (acceptedSocket == null) return;
                         OnSocketAdded(acceptedSocket);
                     }
-                    catch (Exception ex)
+                    catch (SocketException socketException)
                     {
-                        if (ex is SocketException socketException && socketException.SocketErrorCode == SocketError.OperationAborted)
+                        if (socketException.SocketErrorCode == SocketError.OperationAborted)
                             return;
-                        InvokeException(ex);
+                        InvokeException(socketException);
                     }
                 }, socketv6);
             }
         }
-        catch (Exception ex)
+        catch (SocketException ex)
         {
             InvokeException(ex);
         }
@@ -114,16 +123,18 @@ public class TcpSocket(bool enableIpv6 = true) : CoreSocket(SocketType.Stream, P
 
     public ValueTask<int> Send(Socket socket, ReadOnlyMemory<byte> data, SocketFlags flags = SocketFlags.None)
     {
-        if (socket == null) return ValueTask.FromResult(-1);
+        if (socket == null)
+            return ValueTask.FromResult(-1);
 
         try
         {
             return socket.SendAsync(data, flags);
         }
-        catch (Exception ex)
+        catch (SocketException ex)
         {
             InvokeException(ex);
         }
+
         return ValueTask.FromResult(-1);
     }
 }
