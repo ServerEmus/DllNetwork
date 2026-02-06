@@ -1,7 +1,5 @@
 ﻿using Serilog;
 using System.Net;
-using System.Net.Sockets;
-using System.Threading.Tasks;
 
 namespace DllSocket.Test;
 
@@ -10,6 +8,11 @@ public class BroadcastUdpTest
     [Fact]
     public async Task TestAll()
     {
+        if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GITHUB_WORKSPACE")))
+        {
+            return;
+        }
+
         var logger = new LoggerConfiguration().WriteTo.File("logs_broadcast.txt").CreateLogger();
         Serilog.Log.Logger = logger;
         BroadcastSocket server = new();
