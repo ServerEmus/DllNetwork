@@ -67,6 +67,11 @@ public class ManagerSettings
     /// Gets or sets a value indicating whether IPv6 is enabled for network operations.
     /// </summary>
     public bool EnableIpv6 { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum size of the network packet queue.
+    /// </summary>
+    public int MaxQueueSize { get; set; } = 100;
 }
 
 /// <summary>

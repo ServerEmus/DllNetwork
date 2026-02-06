@@ -1,4 +1,5 @@
-﻿using DllSocket;
+﻿using DllNetwork.SocketWorkers;
+using DllSocket;
 using Serilog;
 using System.Net;
 
@@ -59,7 +60,7 @@ public class MainNetwork
     public void Start()
     {
         BroadcastWork = new(broadcast);
-        UdpWork = new(udp);
+        UdpWork = new(udp, settings.Manager.MaxQueueSize);
 
         broadcast.Start();
         int broadcastPort = AddressHelper.GetPort(settings.Broadcast.BroadcastPort, settings.Broadcast.EndRangeBroadcastPort, false);
@@ -102,11 +103,11 @@ public class MainNetwork
     public void Update()
     {
         broadcast.Update();
-        BroadcastWork.BroadcastUpdate();
+        BroadcastWork.Update();
         tcpServer.Update();
         tcpClient.Update();
         udp.Update();
-        UdpWork.UdpReceive();
+        UdpWork.Update();
     }
 
 

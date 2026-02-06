@@ -1,4 +1,6 @@
-﻿using Serilog;
+﻿using DllNetwork.SocketWorkers;
+using DllSocket;
+using Serilog;
 using System.Net;
 
 namespace DllNetwork.PacketProcessors;
@@ -45,7 +47,7 @@ public static class MainProcessor
         return true;
     }
 
-    public static void ReceiveProcess(Memory<byte> bytes, IPEndPoint remoteEndPoint, string accountId)
+    public static void ReceiveProcess(ISocketWorker socketWorker, Memory<byte> bytes, IPEndPoint remoteEndPoint, string accountId)
     {
         Log.Debug("Received bytes in buffer: {buffer}", Convert.ToHexString(bytes.ToArray()));
         var packet = PackExt.Deserialize<INetworkPacket>(bytes);
@@ -57,10 +59,17 @@ public static class MainProcessor
 
         switch (packet)
         {
-            case HandshakePacket handshakePacket:
+            case ConnectPacket handshakePacket:
                 Log.Information("Received HandshakePacket {packet} from {Account}", handshakePacket, accountId);
-                HandshakePacketProcessor.ProcessPacket(handshakePacket, remoteEndPoint, accountId);
-                // Process HandshakePacket
+                Processors.ProcessConnectPacket(socketWorker, handshakePacket, remoteEndPoint, accountId);
+                break;
+            case ConnectReplyPacket handshakeReplyPacket:
+                Log.Information("Received HandshakeReplyPacket {packet} from {Account}", handshakeReplyPacket, accountId);
+                Processors.ProcessReplyPacket(socketWorker, handshakeReplyPacket, remoteEndPoint, accountId);
+                break;
+            case HeartBeatPacket heartBeatPacket:
+                Log.Information("Received HeartBeatPacket {packet} from {Account}", heartBeatPacket, accountId);
+                Processors.ProcessHeartBeatPacket(socketWorker, heartBeatPacket, remoteEndPoint, accountId);
                 break;
             default:
                 Log.Information("Received {packet} from {Account}", packet, accountId);

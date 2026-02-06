@@ -4,28 +4,33 @@ using Serilog;
 using System.Buffers;
 using System.Net;
 
-namespace DllNetwork;
+namespace DllNetwork.SocketWorkers;
 
-public class BroadcastWork
+public class BroadcastWork : ISocketWorker
 {
-    private readonly HandshakePacket Handshake;
+    private readonly ConnectPacket Handshake;
     private readonly BroadcastSocket broadcastSocket;
-
+    private AnnouncePacket? AnnouncePacket = new();
 
     public BroadcastWork(BroadcastSocket socket)
     {
         broadcastSocket = socket;
         Handshake = new()
         {
-            AccountId = MainNetwork.Instance.settings.Account.AccountId,
             HandshakeKey = MainNetwork.Instance.settings.Connection.HandshakeKey
         };
     }
 
-    public AnnouncePacket? AnnouncePacket = new();
+    public PortType PortType => PortType.Broadcast;
+    public CoreSocket Socket => broadcastSocket;
 
 
-    public void BroadcastUpdate()
+    public void AddPacketQueue(INetworkPacket networkPacket, string userId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void Update()
     {
         int av = broadcastSocket.Available;
         if (av == 0)
