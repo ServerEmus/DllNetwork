@@ -40,7 +40,7 @@ public class MainNetwork
         {
             SocketAddresses.Add(new IPEndPoint(IPAddress.Broadcast, i).Serialize());
         }
-        MyIpAddresses = AddressHelper.GetInteraceAddresses();
+        MyIpAddresses = AddressHelper.GetInterfaceAddresses();
 
         if (!settings.Manager.EnableIpv6)
         {

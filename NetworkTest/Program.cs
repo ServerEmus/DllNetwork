@@ -12,7 +12,7 @@ internal class Program
     static void Main(string[] _)
     {
         Console.WriteLine("Your IP addresses:");
-        foreach (var item in AddressHelper.GetInteraceAddresses())
+        foreach (var item in AddressHelper.GetInterfaceAddresses())
         {
             Console.WriteLine(item);
         }
@@ -60,18 +60,18 @@ internal class Program
         heartBeatPacket = (HeartBeatPacket)x.Deserialize<INetworkPacket>()!;
         */
 
-        string? readed = null;
-        while (readed?.ToLower() != "q")
+        string? input = null;
+        while (input?.ToLower() != "q")
         {
-            readed = Console.ReadLine();
+            input = Console.ReadLine();
             MainNetwork.Instance.Update();
-            if (readed == null)
+            if (input == null)
                 continue;
-            if (readed.Contains("bc"))
+            if (input.Contains("bc"))
             {
                 MainNetwork.Instance.BroadcastWork.SendAnnounce();
             }
-            if (readed.StartsWith('!') && readed.Contains(' '))
+            if (input.StartsWith('!') && input.Contains(' '))
             {
                 Console.WriteLine("Here should be message sending!");
             }

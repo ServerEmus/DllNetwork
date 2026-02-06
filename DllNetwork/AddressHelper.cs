@@ -24,7 +24,7 @@ public static class AddressHelper
         }
     }
 
-    public static List<IPAddress> GetInteraceAddresses()
+    public static List<IPAddress> GetInterfaceAddresses()
     {
         List<IPAddress> addresses = [];
 
