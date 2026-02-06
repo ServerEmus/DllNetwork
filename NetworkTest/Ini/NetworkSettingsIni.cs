@@ -25,7 +25,7 @@ internal static class NetworkSettingsIni
         if (AlreadyRead)
             return NetworkSettings._instance;
 
-        string path = Path.Combine(AppContext.BaseDirectory, FileName);
+        string path = Path.Join(AppContext.BaseDirectory, FileName);
         if (!File.Exists(path))
         {
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);

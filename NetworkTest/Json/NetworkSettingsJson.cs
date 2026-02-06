@@ -20,7 +20,7 @@ internal static class NetworkSettingsJson
 
     private static NetworkSettings NetworkSettings_OnGet()
     {
-        string path = Path.Combine(AppContext.BaseDirectory, "configs" ,FileName);
+        string path = Path.Join(AppContext.BaseDirectory, "configs", FileName);
         if (!File.Exists(path))
         {
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);

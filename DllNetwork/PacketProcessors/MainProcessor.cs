@@ -51,14 +51,6 @@ public static class MainProcessor
 
     public static void ReceiveProcess(ISocketWorker socketWorker, Memory<byte> bytes, IPEndPoint remoteEndPoint, string accountId)
     {
-        try
-        {
-
-        }
-        catch (Exception ex)
-        {
-            Log.Error("Error {ex} processing packet from {Account} ", ex, accountId);
-        }
         Log.Debug("Received bytes in buffer: {buffer}", Convert.ToHexString(bytes.Span));
         var packet = PackExt.DeserializeNetworkPacket(bytes);
         if (packet == null)

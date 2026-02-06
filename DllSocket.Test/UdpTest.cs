@@ -33,14 +33,12 @@ public class UdpTest
         Log.Information("Client v6 {host}", client.socketv6!.ToFancyString());
         await client.Send(TestConst.DataToSend, TestConst.ConnectV4_UPD);
         byte[] receiveData = new byte[4];
-        EndPoint recv = TestConst.AnyClient;
         int recevied = await server.Receive(receiveData, true);
         Assert.Equal(TestConst.DataToSend.Length, recevied);
         Assert.Equal(TestConst.DataToSend, receiveData);
 
         await client.Send(TestConst.DataToSend, TestConst.ConnectV6_UPD);
         receiveData = new byte[4];
-        recv = TestConst.AnyV6Client;
         recevied = await server.Receive(receiveData, false);
         Assert.Equal(TestConst.DataToSend.Length, recevied);
         Assert.Equal(TestConst.DataToSend, receiveData);

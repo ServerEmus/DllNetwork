@@ -30,7 +30,6 @@ public class BroadcastUdpTest
 
         await client.Send(TestConst.DataToSend, TestConst.ConnectV4);
         byte[] receiveData = new byte[4];
-        EndPoint recv = TestConst.AnyClient;
         int recevied = await server.Receive(receiveData, true);
         Assert.Equal(TestConst.DataToSend.Length, recevied);
         Assert.Equal(TestConst.DataToSend, receiveData);
