@@ -26,39 +26,6 @@ internal class Program
         Formatters.RegisterAll();
         NetworkSettingsIni.Connect();
         MainNetwork.Instance.Start();
-        /*
-        AnnouncePacket announcePacket = new();
-        var x = PackExt.Serialize(announcePacket);
-        announcePacket = x.Deserialize<AnnouncePacket>()!;
-
-        ConnectPacket connectPacket  = new();
-        x = PackExt.Serialize(connectPacket);
-        connectPacket = x.Deserialize<ConnectPacket>()!;
-
-        ConnectReplyPacket connectReply = new();
-        x = PackExt.Serialize(connectReply);
-        connectReply = x.Deserialize<ConnectReplyPacket>()!;
-
-        HeartBeatPacket heartBeatPacket = new();
-        x = PackExt.Serialize(heartBeatPacket);
-        heartBeatPacket = x.Deserialize<HeartBeatPacket>()!;
-
-        announcePacket = new();
-        x = PackExt.Serialize(announcePacket);
-        announcePacket = (AnnouncePacket)x.Deserialize<INetworkPacket>()!;
-
-        connectPacket = new();
-        x = PackExt.Serialize(connectPacket);
-        connectPacket = (ConnectPacket)x.Deserialize<INetworkPacket>()!;
-
-        connectReply = new();
-        x = PackExt.Serialize(connectReply);
-        connectReply = (ConnectReplyPacket)x.Deserialize<INetworkPacket>()!;
-
-        heartBeatPacket = new();
-        x = PackExt.Serialize(heartBeatPacket);
-        heartBeatPacket = (HeartBeatPacket)x.Deserialize<INetworkPacket>()!;
-        */
 
         string? input = null;
         while (input?.ToLower() != "q")

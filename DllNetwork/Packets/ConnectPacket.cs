@@ -6,6 +6,11 @@ namespace DllNetwork.Packets;
 [EIV_Packable]
 public partial class ConnectPacket : INetworkPacket
 {
+    public static readonly ConnectPacket MyPacket = new()
+    { 
+        HandshakeKey = MainNetwork.Instance.settings.Connection.HandshakeKey
+    };
+
     /// <inheritdoc/>
     public byte PacketId => (byte)PacketIdType.Connect;
 

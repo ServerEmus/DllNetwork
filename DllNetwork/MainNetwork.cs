@@ -2,6 +2,7 @@
 using DllSocket;
 using Serilog;
 using System.Net;
+using System.Net.Http;
 using System.Net.Sockets;
 
 namespace DllNetwork;
@@ -23,6 +24,8 @@ public class MainNetwork
 
     public BroadcastWork BroadcastWork { get; private set; } = default!;
     public UdpWork UdpWork { get; private set; } = default!;
+
+    public TcpWork TcpWork { get; private set; } = default!;
 
     internal MainNetwork()
     {
@@ -67,6 +70,7 @@ public class MainNetwork
     {
         BroadcastWork = new(broadcast);
         UdpWork = new(udp, settings.Manager.MaxQueueSize, settings.Manager.HearthbeatInterval);
+        TcpWork = new(tcpServer, tcpClient);
 
         broadcast.Start();
         int broadcastPort = AddressHelper.GetPort(settings.Broadcast.BroadcastPort, settings.Broadcast.EndRangeBroadcastPort, false);
@@ -87,6 +91,7 @@ public class MainNetwork
         tcpServer.Bind(tcpEndPoint, tcpEndPointV6);
 
         tcpClient.Start();
+        tcpServer.OnAccepted += TcpWork.Connected;
 
         udp.Start();
         int udpPort = AddressHelper.GetPort(isTcp: false);
@@ -104,6 +109,8 @@ public class MainNetwork
             UdpPort = udpPort,
             BroadcastPort = broadcastPort,
         };
+
+        Log.Debug("My ports: {port}", NetworkPorts);
     }
 
     public void Update()
@@ -114,6 +121,7 @@ public class MainNetwork
         tcpClient.Update();
         udp.Update();
         UdpWork.Update();
+        TcpWork.Update();
     }
 
 

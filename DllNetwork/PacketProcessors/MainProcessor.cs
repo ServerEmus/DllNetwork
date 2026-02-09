@@ -7,6 +7,8 @@ namespace DllNetwork.PacketProcessors;
 
 public static class MainProcessor
 {
+    public static event Action<ISocketWorker, Memory<byte>, IPEndPoint, string>? OnReceivedPacket;
+
     public static readonly Dictionary<IPEndPoint, int> TimeoutProcessingEndpoints = [];
 
     public static readonly List<IPEndPoint> DenyProcessingEndpoints = [];
@@ -75,6 +77,7 @@ public static class MainProcessor
                 break;
             default:
                 Log.Information("Received {packet} from {Account}", packet, accountId);
+                OnReceivedPacket?.Invoke(socketWorker, bytes, remoteEndPoint, accountId);
                 break;
         }
     }

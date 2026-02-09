@@ -7,21 +7,11 @@ using System.Net;
 
 namespace DllNetwork.SocketWorkers;
 
-public class BroadcastWork : ISocketWorker
+public class BroadcastWork(BroadcastSocket socket) : ISocketWorker
 {
-    private readonly ConnectPacket Connect;
-    private readonly BroadcastSocket broadcastSocket;
+    private readonly BroadcastSocket broadcastSocket = socket;
     private AnnouncePacket? AnnouncePacket = new();
     private readonly ConcurrentBag<string> AlreadyReceived = [];
-
-    public BroadcastWork(BroadcastSocket socket)
-    {
-        broadcastSocket = socket;
-        Connect = new()
-        {
-            HandshakeKey = MainNetwork.Instance.settings.Connection.HandshakeKey
-        };
-    }
 
     public PortType PortType => PortType.Broadcast;
     public CoreSocket Socket => broadcastSocket;
@@ -100,7 +90,7 @@ public class BroadcastWork : ISocketWorker
         await broadcastSocket.Send(data, new IPEndPoint(IPAddress.Broadcast, MainNetwork.Instance.NetworkPorts.BroadcastPort));
     }
 
-    private async Task ConnectAsyncWork(AnnouncePacket announcePacket, List<Task> tasks)
+    private static async Task ConnectAsyncWork(AnnouncePacket announcePacket, List<Task> tasks)
     {
         await Task.WhenAll(tasks);
 
@@ -110,7 +100,9 @@ public class BroadcastWork : ISocketWorker
         }
 
         Log.Debug("Sending Connect packet to {accountId} after pinging", announcePacket.AccountId);
-        MainNetwork.Instance.UdpWork.Send(Connect, announcePacket.AccountId);
+        // Disable UDP while testing tcp.
+        // MainNetwork.Instance.UdpWork.Send(ConnectPacket.MyPacket, announcePacket.AccountId);
+        MainNetwork.Instance.TcpWork.Connect(announcePacket.AccountId);
     }
 
     public void SendAnnounce()

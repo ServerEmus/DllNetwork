@@ -9,6 +9,34 @@ public class TcpSocket(bool enableIpv6 = true) : CoreSocket(SocketType.Stream, P
     public event Action<Socket>? OnAccepted;
     public readonly List<Socket> AcceptedSockets = [];
 
+    public EndPoint? LocalEndPoint
+    {
+        get
+        {
+            if (EnableIpv6 && socketv6 != null && socketv6.IsBound)
+                return socketv6.LocalEndPoint;
+
+            if (socketv4 != null && socketv4.IsBound)
+                return socketv4.LocalEndPoint;
+
+            return null;
+        }
+    }
+
+    public EndPoint? RemoteEndPoint
+    {
+        get
+        {
+            if (EnableIpv6 && socketv6 != null && socketv6.Connected)
+                return socketv6.RemoteEndPoint;
+
+            if (socketv4 != null && socketv4.Connected)
+                return socketv4.RemoteEndPoint;
+
+            return null;
+        }
+    }
+
     public void Connect(IPAddress address, int port)
     {
         if (socketv4 == null)
@@ -40,6 +68,12 @@ public class TcpSocket(bool enableIpv6 = true) : CoreSocket(SocketType.Stream, P
 
             if (EnableIpv6 && socketv6 != null && socketv6.Connected)
                 socketv6.BeginDisconnect(true, socketv6.EndDisconnect, socketv6);
+
+            foreach (var acceptedSocket in AcceptedSockets)
+            {
+                if (acceptedSocket.Connected)
+                    acceptedSocket.BeginDisconnect(true, acceptedSocket.EndDisconnect, acceptedSocket);
+            }
         }
         catch (Exception ex)
         {

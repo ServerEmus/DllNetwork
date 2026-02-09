@@ -239,4 +239,9 @@ public class CoreSocket(SocketType socketType, ProtocolType protocolType, bool e
     }
 
     protected virtual void OnSocketBind() { }
+
+    public override string ToString()
+    {
+        return $"{socketv4?.ToFancyString()} / {socketv6?.ToFancyString()}";
+    }
 }
