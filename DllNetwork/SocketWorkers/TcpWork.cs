@@ -4,7 +4,6 @@ using Serilog;
 using System.Buffers;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.Intrinsics.Arm;
 
 namespace DllNetwork.SocketWorkers;
 
@@ -43,12 +42,15 @@ public class TcpWork(TcpSocket tcpServer, TcpSocket tcpClient) : ISocketWorker
             return;
         }
 
+        Log.Information("Connecting to {address} for account ID {accountId}", address, accountId);
         client.Connect(address.Address, address.Port);
     }
 
     public void Connected(Socket connectedSocket)
     {
         Log.Information("New TCP connection from {address} ({fancy})", connectedSocket.RemoteEndPoint, connectedSocket.ToFancyString());
+
+        UserIdToSocket.Add(new() { UserId = string.Empty, Socket = connectedSocket });
 
         server.Send(connectedSocket, ConnectPacket.MyPacket.Serialize()).AsTask()
             .ContinueWith((completedTask) =>
@@ -62,42 +64,27 @@ public class TcpWork(TcpSocket tcpServer, TcpSocket tcpClient) : ISocketWorker
                 Log.Debug("ConnectPacket sent!");
             });
     }
-
-    public void Send<T>(T packet, string accountId) where T : INetworkPacket
-    {
-        var bytes = packet.Serialize();
-        if (!NetworkAccount.TryGetFirstAddress(accountId, out var address) || address == null)
-        {
-            Log.Warning("No address found for account ID {accountId}", accountId);
-            return;
-        }
-
-        if (!NetworkAccount.TryGetPort(accountId, out var port) || port.UdpPort == 0)
-        {
-            Log.Warning("No ports found for account ID {accountId}", accountId);
-            return;
-        }
-        /*
-        SenderEndPoint.Address = address;
-        SenderEndPoint.Port = port.UdpPort;
-        Log.Debug("Sending packet {packet} to address: {address} ({acc})", bytes, SenderEndPoint, accountId);
-        socket.Send(bytes).AsTask().
-            ContinueWith((completedTask) =>
-            {
-                if (!completedTask.IsCompletedSuccessfully)
-                {
-                    Log.Error("Packet could not be sent! {Ex}", completedTask.Exception);
-                    return;
-                }
-            });
-        */
-    }
-
-
+    List<UserIdSocket> toRemove = [];
     private void ReceiveUpdate()
     {
         SocketReceive(server);
         SocketReceive(client);
+
+        toRemove.Clear();
+        foreach (var userIdSocket in UserIdToSocket)
+        {
+            if (userIdSocket.Socket == null)
+            {
+                toRemove.Add(userIdSocket);
+                continue;
+            }
+            ConnectedSocketReceive(userIdSocket.Socket);
+        }
+
+        foreach (var item in toRemove)
+        {
+            UserIdToSocket.Remove(item);
+        }
     }
 
     private void SocketReceive(TcpSocket tcpSocket)
@@ -140,8 +127,46 @@ public class TcpWork(TcpSocket tcpServer, TcpSocket tcpClient) : ISocketWorker
             });
     }
 
+    private void ConnectedSocketReceive(Socket socket)
+    {
+        if (socket.Available == 0)
+            return;
+        IPEndPoint receive = socket.AddressFamily == AddressFamily.InterNetwork ? Constants.ReceiveEndpointV4 : Constants.ReceiveEndpointV6;
+        var rented = MemoryPool<byte>.Shared.Rent(CoreSocket.BufferSize);
+        socket.ReceiveFromAsync(rented.Memory, receive).AsTask().
+            ContinueWith((completedTask) =>
+            {
+                if (!completedTask.IsCompletedSuccessfully)
+                {
+                    Log.Information("Task failed!");
+                    return;
+                }
+                var receiveFromResult = completedTask.Result;
+
+                var remoteEendpoint = socket.RemoteEndPoint;
+
+                Log.Information("Bytes {len} received from {address}", receiveFromResult.ReceivedBytes, remoteEendpoint);
+
+                if (remoteEendpoint is not IPEndPoint endPoint)
+                {
+                    Log.Debug("Remote is not IPEndPoint, it is type: {type}", remoteEendpoint?.GetType());
+                    return;
+                }
+
+                if (!MainProcessor.CanProcess(endPoint, out string accountId))
+                    return;
+
+                MainProcessor.ReceiveProcess(this, rented.Memory[..receiveFromResult.ReceivedBytes], endPoint, accountId);
+
+                rented.Dispose();
+            });
+
+    }
     private void SendUpdate()
     {
+        foreach (var item in PacketQueue)
+        {
 
+        }
     }
 }

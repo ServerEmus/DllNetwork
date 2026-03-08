@@ -2,7 +2,6 @@
 using DllSocket;
 using Serilog;
 using System.Net;
-using System.Net.Http;
 using System.Net.Sockets;
 
 namespace DllNetwork;
@@ -43,6 +42,7 @@ public class MainNetwork
         {
             SocketAddresses.Add(new IPEndPoint(IPAddress.Broadcast, i).Serialize());
         }
+
         MyIpAddresses = AddressHelper.GetInterfaceAddresses();
 
         if (!settings.Manager.EnableIpv6)
@@ -119,9 +119,9 @@ public class MainNetwork
         BroadcastWork.Update();
         tcpServer.Update();
         tcpClient.Update();
+        TcpWork.Update();
         udp.Update();
         UdpWork.Update();
-        TcpWork.Update();
     }
 
 

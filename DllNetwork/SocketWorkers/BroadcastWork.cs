@@ -16,10 +16,7 @@ public class BroadcastWork(BroadcastSocket socket) : ISocketWorker
     public PortType PortType => PortType.Broadcast;
     public CoreSocket Socket => broadcastSocket;
 
-    public void AddPacketQueue(INetworkPacket networkPacket, string userId)
-    {
-        throw new NotImplementedException();
-    }
+    public void AddPacketQueue(INetworkPacket networkPacket, string userId) { }
 
     public void Update()
     {
@@ -78,7 +75,7 @@ public class BroadcastWork(BroadcastSocket socket) : ISocketWorker
             }
         }
 
-        ConnectAsyncWork(announcePacket, PingTasks).Start();
+        await ConnectAsyncWork(announcePacket, PingTasks);
 
         announcePacket.AccountId = NetworkSettings.Instance.Account.AccountId;
         announcePacket.Addresses = MainNetwork.Instance.MyIpAddresses;
@@ -118,11 +115,7 @@ public class BroadcastWork(BroadcastSocket socket) : ISocketWorker
         byte[] data = AnnouncePacket.Serialize();
         foreach (var socketAddress in MainNetwork.Instance.SocketAddresses)
         {
-            broadcastSocket.Send(data, socketAddress).AsTask().
-                ContinueWith((completedTask) =>
-                {
-                    Log.Information("Announce {packet} send to {address} {len}", AnnouncePacket, socketAddress, completedTask.Result);
-                });
+            broadcastSocket.Send(data, socketAddress).AsTask();
         }
 
     }
