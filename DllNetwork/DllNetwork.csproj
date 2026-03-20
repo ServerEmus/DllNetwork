@@ -12,19 +12,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="EIV_Pack" Version="2.1.0" />
-    <PackageReference Include="EIV_Pack.Generator" Version="2.1.2">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="LiteNetLib" Version="2.0.2" />
     <PackageReference Include="Serilog" Version="4.3.1" />
   </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\DllSocket\DllSocket.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Using Include="DllNetwork.Packets" />
-  </ItemGroup>
+	
 </Project>

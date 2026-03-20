@@ -7,8 +7,8 @@ namespace DllNetwork;
 
 public static class PingHelper
 {
-    private static Ping NetPing { get; } = new();
     private static readonly ConcurrentDictionary<string, List<IPAddress>> AccToPingedIPS = [];
+    public static readonly ConcurrentDictionary<IPAddress, long> IpToRTT = [];
 
     public static void PingAddress(string AccountId, IPAddress address, Action<string, IPAddress, long>? onSuccess = null)
     {
@@ -23,18 +23,23 @@ public static class PingHelper
         {
             AccToPingedIPS.TryUpdate(AccountId, [.. addresses, address], addresses);
             Log.Information("PING {Account} -> {ip}", AccountId, address);
+            Ping NetPing = new();
             NetPing.SendPingAsync(address, 1000).ContinueWith((taskAction) =>
             {
                 if (!taskAction.IsCompletedSuccessfully)
+                {
+                    Log.Error("PING {Account} with {address} was not success! {err}", AccountId, address, taskAction.Exception);
                     return;
+                }
 
                 PingReply result = taskAction.Result;
                 if (result.Status != IPStatus.Success)
                 {
-                    Log.Information("PING {Account} <- {Status}", AccountId, result.Status);
+                    Log.Information("PING {Account} <- {Address} {Status}", AccountId, address, result.Status);
                     return;
                 }
                 Log.Information("PING {Account} <- {Address} {RTT} {Status}", AccountId, result.Address, result.RoundtripTime, result.Status);
+                IpToRTT.AddOrUpdate(result.Address, (ip) => result.RoundtripTime, (ip, rtt) => result.RoundtripTime);
                 onSuccess?.Invoke(AccountId, address, result.RoundtripTime);
             });
         }
@@ -53,6 +58,7 @@ public static class PingHelper
         {
             AccToPingedIPS.TryUpdate(AccountId, [.. addresses, address], addresses);
             Log.Information("PING {Account} -> {ip}", AccountId, address);
+            Ping NetPing = new();
             await NetPing.SendPingAsync(address, 1000).ContinueWith((taskAction) =>
             {
                 if (!taskAction.IsCompletedSuccessfully)
@@ -61,10 +67,11 @@ public static class PingHelper
                 PingReply result = taskAction.Result;
                 if (result.Status != IPStatus.Success)
                 {
-                    Log.Information("PING {Account} <- {Status}", AccountId, result.Status);
+                    Log.Information("PING {Account} <- {Address} {Status}", AccountId, address, result.Status);
                     return;
                 }
                 Log.Information("PING {Account} <- {Address} {RTT} {Status}", AccountId, result.Address, result.RoundtripTime, result.Status);
+                IpToRTT.AddOrUpdate(result.Address, (ip) => result.RoundtripTime, (ip, rtt) => result.RoundtripTime);
                 onSuccess?.Invoke(AccountId, address, result.RoundtripTime);
             });
         }

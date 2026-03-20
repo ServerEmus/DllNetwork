@@ -12,7 +12,7 @@ public class NetworkSettings
     /// Gets the singleton instance of the NetworkSettings class.
     /// </summary>
     public static NetworkSettings Instance
-    { 
+    {
         get
         {
             if (OnGet != null)
@@ -53,9 +53,9 @@ public class NetworkSettings
 public class ConnectionSettings
 {
     /// <summary>
-    /// Gets or sets the handshake key used to establish a secure connection.
+    /// Gets or sets the connection key used to establish a secure connection.
     /// </summary>
-    public string HandshakeKey { get; set; } = string.Empty;
+    public string ConnectionKey { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -67,16 +67,6 @@ public class ManagerSettings
     /// Gets or sets a value indicating whether IPv6 is enabled for network operations.
     /// </summary>
     public bool EnableIpv6 { get; set; }
-
-    /// <summary>
-    /// Gets or sets the maximum size of the network packet queue.
-    /// </summary>
-    public int MaxQueueSize { get; set; } = 100;
-
-    /// <summary>
-    /// Gets or sets the interval, in seconds, at which heartbeat messages are sent to maintain active connections.
-    /// </summary>
-    public byte HearthbeatInterval { get; set; } = 5;
 }
 
 /// <summary>
@@ -93,6 +83,14 @@ public class BroadcastSettings
     /// Gets or sets the ending port number of the broadcast port range.
     /// </summary>
     public int EndRangeBroadcastPort { get; set; } = 5560;
+
+    /// <summary>
+    /// Gets or sets the endpoint for the custom broadcast server.
+    /// </summary>
+    /// <remarks>
+    /// Endpoint communication is described in the BroadcastCommunication.md file.
+    /// </remarks> 
+    public string CustomBroadcastServerEndpoint { get; set; } = string.Empty;
 }
 
 /// <summary>
