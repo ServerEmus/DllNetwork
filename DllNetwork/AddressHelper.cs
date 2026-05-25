@@ -6,6 +6,22 @@ namespace DllNetwork;
 
 public static class AddressHelper
 {
+    public static List<IPAddress> Addresses
+    {
+        get
+        {
+            if (field == null)
+            {
+                field = GetInterfaceAddresses();
+
+                if (!NetworkSettings.Instance.Manager.EnableIpv6)
+                    field.RemoveAll(static x => x.AddressFamily == AddressFamily.InterNetworkV6);
+            }
+                
+            return field;
+        }
+    }
+
     private static bool WhereCheck(NetworkInterface networkInterface)
     {
         if (networkInterface.NetworkInterfaceType is NetworkInterfaceType.Loopback or NetworkInterfaceType.Tunnel)
@@ -29,9 +45,9 @@ public static class AddressHelper
         List<IPAddress> addresses = [];
 
         var interfaces = NetworkInterface.GetAllNetworkInterfaces().Where(WhereCheck);
-        foreach (var ipv4 in interfaces)
+        foreach (var @interface in interfaces)
         {
-            GetIpAddress(ipv4.GetIPProperties(), ref addresses);
+            GetIpAddress(@interface.GetIPProperties(), ref addresses);
         }
 
         if (addresses.Count == 0)
