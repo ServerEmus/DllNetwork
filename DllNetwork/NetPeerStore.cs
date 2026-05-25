@@ -10,7 +10,7 @@ public class NetPeerStore
         public string AccountId = string.Empty;
         public int PeerId;
         public int Port;
-        public SortedList<long, List<IPAddress>> RTTAddresses = [];
+        public readonly SortedList<long, List<IPAddress>> RTTAddresses = [];
 
         public List<IPAddress> NetworkAddresses
         {
@@ -136,16 +136,8 @@ public class NetPeerStore
 
     public static bool TryGetFromPeerId(int peerId, [NotNullWhen(true)] out string accountId)
     {
-        accountId = string.Empty;
-
-        foreach (var store in Stores)
-        {
-            if (store.Value.PeerId != peerId)
-                continue;
-
-            accountId = store.Key;
-            break;
-        }
+        var store = Stores.FirstOrDefault(kvp => kvp.Value.PeerId == peerId);
+        accountId = store.Key ?? string.Empty;
 
         return accountId != string.Empty;
     }

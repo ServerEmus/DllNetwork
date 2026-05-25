@@ -33,8 +33,9 @@ public static class BroadcastCustom
         };
 
         string data = JsonSerializer.Serialize(startJson, SourceGenerationContext.Default.BroadcastJson);
+        using var content = new StringContent(data);
 
-        var response = client.PostAsync("/start", new StringContent(data)).Result;
+        var response = client.PostAsync("/start", content).Result;
         if (response.StatusCode == System.Net.HttpStatusCode.OK)
             return;
 

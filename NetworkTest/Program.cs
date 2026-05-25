@@ -5,6 +5,7 @@ using NetworkTest.CustomPacket;
 using NetworkTest.Ini;
 using Serilog;
 using System.Net;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace NetworkTest;
 
@@ -65,35 +66,21 @@ internal class Program
 
             if (input.Contains("connect"))
             {
-                foreach (var item in BroadcastUdp.GetList())
+                foreach (var item in BroadcastUdp.GetList()
+                    .Where(item => item.Addresses.Count > 0 &&
+                    !string.IsNullOrEmpty(item.Addresses.FirstOrDefault()) && 
+                    !ClientManager.Instance.IsAccountConnected(item.AccountId)))
                 {
-                    if (item.Addresses.Count == 0)
-                        continue;
-
-                    string? addressToConnect = item.Addresses.FirstOrDefault();
-
-                    if (string.IsNullOrEmpty(addressToConnect))
-                        continue;
-
-                    if (ClientManager.Instance.IsAccountConnected(item.AccountId))
-                        continue;
-
+                    string addressToConnect = item.Addresses.FirstOrDefault()!;
                     ClientManager.Instance.Connect(addressToConnect, item.Port, item.AccountId);
                 }
 
-                foreach (var item in BroadcastCustom.GetList())
+                foreach (var item in BroadcastCustom.GetList().
+                    Where(item => item.Addresses.Count > 0 &&
+                    !string.IsNullOrEmpty(item.Addresses.FirstOrDefault()) &&
+                    !ClientManager.Instance.IsAccountConnected(item.AccountId)))
                 {
-                    if (item.Addresses.Count == 0)
-                        continue;
-
-                    string? addressToConnect = item.Addresses.FirstOrDefault();
-
-                    if (string.IsNullOrEmpty(addressToConnect))
-                        continue;
-
-                    if (ClientManager.Instance.IsAccountConnected(item.AccountId))
-                        continue;
-
+                    string addressToConnect = item.Addresses.FirstOrDefault()!;
                     ClientManager.Instance.Connect(addressToConnect, item.Port, item.AccountId);
                 }
             }

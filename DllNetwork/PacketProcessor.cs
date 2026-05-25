@@ -86,10 +86,9 @@ public static class PacketProcessor
 
         Log.Information("BroadcastPacket receveied! {data} {point}", packet, point);
 
-        foreach (var address in packet.Addresses)
+        foreach (var ip in packet.Addresses.Select(IPAddress.Parse))
         {
-            var ip = IPAddress.Parse(address);
-            PingHelper.PingAddress(packet.Id, ip, (id, ip, rtt) =>
+            _ = PingHelper.PingAddress(packet.Id, ip, (id, ip, rtt) =>
             {
                 NetPeerStore.SetAddress(id, ip, rtt);
                 BroadcastUdp.AcceptedBroadcasts.Add(new()
