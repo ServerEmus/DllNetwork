@@ -1,43 +1,57 @@
 ﻿using DllNetwork.Json;
 using DllNetwork.Managers;
+using DllNetwork.Settings;
 using Serilog;
 using System.Text.Json;
 
 namespace DllNetwork.Broadcast;
 
+/// <summary>
+/// Provides a custom broadcasting via http.
+/// </summary>
 public static class BroadcastCustom
 {
-    static readonly HttpClient? client;
+    private static readonly HttpClient? Client;
+
     static BroadcastCustom()
     {
         string endPoint = NetworkSettings.Instance.Broadcast.CustomBroadcastServerEndpoint;
         if (string.IsNullOrEmpty(endPoint))
-            return;
-
-        client = new()
         {
-            BaseAddress = new Uri(endPoint)
+            return;
+        }
+
+        Client = new()
+        {
+            BaseAddress = new Uri(endPoint),
         };
     }
 
+    /// <summary>
+    /// Sends a start message to the broadcast server.
+    /// </summary>
     public static void Start()
     {
-        if (client == null)
+        if (Client == null)
+        {
             return;
+        }
 
-        BroadcastJson startJson = new()
-        { 
+        BroadcastAccount startJson = new()
+        {
             AccountId = NetworkSettings.Instance.Account.AccountId,
             Addresses = [.. AddressHelper.Addresses.Select(static x => x.ToString())],
             Port = ServerManager.Instance.Port,
         };
 
-        string data = JsonSerializer.Serialize(startJson, SourceGenerationContext.Default.BroadcastJson);
+        string data = JsonSerializer.Serialize(startJson, SourceGenerationContext.Default.BroadcastAccount);
         using var content = new StringContent(data);
 
-        var response = client.PostAsync("/start", content).Result;
+        var response = Client.PostAsync("/start", content).Result;
         if (response.StatusCode == System.Net.HttpStatusCode.OK)
+        {
             return;
+        }
 
         try
         {
@@ -48,34 +62,46 @@ public static class BroadcastCustom
         {
             Log.Warning("[BroadcastCustom.Start] Error {ex}", ex);
         }
-
     }
 
+    /// <summary>
+    /// Sends a stop message to the broadcast server.
+    /// </summary>
     public static void Stop()
     {
-        if (client == null)
+        if (Client == null)
+        {
             return;
+        }
 
         // We not really care about if account doesnt exists.
-        client.DeleteAsync($"/stop?accountId={NetworkSettings.Instance.Account.AccountId}");
+        Client.DeleteAsync($"/stop?accountId={NetworkSettings.Instance.Account.AccountId}");
     }
 
-    public static List<BroadcastJson> GetList()
+    /// <summary>
+    /// Gets the broadcast accounts from the broadcast server.
+    /// </summary>
+    /// <returns>The broadcast accounts.</returns>
+    public static List<BroadcastAccount> GetList()
     {
-        List<BroadcastJson> broadcasts = [];
+        List<BroadcastAccount> broadcasts = [];
 
-        if (client == null)
+        if (Client == null)
+        {
             return broadcasts;
+        }
 
-        var httpResponse = client.GetAsync("/list").Result;
+        var httpResponse = Client.GetAsync("/list").Result;
 
         if (httpResponse.StatusCode != System.Net.HttpStatusCode.OK)
+        {
             return broadcasts;
+        }
 
         try
         {
             string rsp = httpResponse.Content.ReadAsStringAsync().Result;
-            broadcasts = JsonSerializer.Deserialize(rsp, SourceGenerationContext.Default.ListBroadcastJson) ?? [];
+            broadcasts = JsonSerializer.Deserialize(rsp, SourceGenerationContext.Default.ListBroadcastAccount) ?? [];
         }
         catch (Exception ex)
         {

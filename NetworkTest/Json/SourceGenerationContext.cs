@@ -1,4 +1,4 @@
-﻿using DllNetwork;
+﻿using DllNetwork.Settings;
 using System.Text.Json.Serialization;
 
 namespace NetworkTest.Json;

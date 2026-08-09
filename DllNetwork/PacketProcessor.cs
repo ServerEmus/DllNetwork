@@ -1,71 +1,19 @@
-﻿using LiteNetLib;
+﻿using DllNetwork.Broadcast;
+using DllNetwork.Settings;
 using LiteNetLib.Utils;
-using DllNetwork.Broadcast;
 using Serilog;
 using System.Net;
 
 namespace DllNetwork;
 
-public readonly struct ReceiveData
-{
-    public readonly NetPeer Peer;
-    public readonly string AccountId;
-    public readonly byte Channel;
-    public readonly DeliveryMethod Delivery;
-
-    public ReceiveData(NetPeer peer, byte channel, DeliveryMethod delivery)
-    {
-        Peer = peer;
-        Channel = channel;
-        Delivery = delivery;
-
-        NetPeerStore.TryGetFromPeerId(peer.Id, out AccountId);
-    }
-
-    public override string ToString()
-    {
-        return $"{Peer} {AccountId} {Channel} {Delivery}";
-    }
-}
-
-public readonly struct EmptyPacket() : INetSerializable
-{
-    public static readonly EmptyPacket Empty = new();
-
-    public readonly void Deserialize(NetDataReader reader) { }
-
-    public readonly void Serialize(NetDataWriter writer) { }
-}
-
-public struct BroadcastPacket : INetSerializable
-{
-    public string Id;
-    public string[] Addresses;
-    public int ConnectPort;
-
-    public void Deserialize(NetDataReader reader)
-    {
-        Id = reader.GetString();
-        Addresses = reader.GetStringArray();
-        ConnectPort = reader.GetInt();
-    }
-
-    public readonly void Serialize(NetDataWriter writer)
-    {
-        writer.Put(Id);
-        writer.PutArray(Addresses);
-        writer.Put(ConnectPort);
-    }
-
-    public readonly override string ToString()
-    {
-        return $"{Id} {ConnectPort} {string.Join(", ", Addresses)}";
-    }
-}
-
-
+/// <summary>
+/// Provides a LiteNetLib packet processor with the default processors initialzed with.
+/// </summary>
 public static class PacketProcessor
 {
+    /// <summary>
+    /// The networking packet processor.
+    /// </summary>
     public static readonly NetPacketProcessor Processor = new();
 
     static PacketProcessor()
@@ -78,11 +26,15 @@ public static class PacketProcessor
     {
         // We skip our current.
         if (packet.Id == NetworkSettings.Instance.Account.AccountId)
+        {
             return;
+        }
 
         // If we have it cached just ignore.
-        if (NetPeerStore.AccountIdList.Contains(packet.Id))
+        if (AccountStorage.AccountIdList.Contains(packet.Id))
+        {
             return;
+        }
 
         Log.Information("BroadcastPacket receveied! {data} {point}", packet, point);
 
@@ -90,8 +42,8 @@ public static class PacketProcessor
         {
             _ = PingHelper.PingAddress(packet.Id, ip, (id, ip, rtt) =>
             {
-                NetPeerStore.SetAddress(id, ip, rtt);
-                BroadcastUdp.AcceptedBroadcasts.Add(new()
+                AccountStorage.SetAddress(id, ip, rtt);
+                BroadcastUdp.AddBroadcast(new()
                 {
                     AccountId = id,
                     Addresses = [ip.ToString()],

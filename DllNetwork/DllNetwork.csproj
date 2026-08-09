@@ -1,19 +1,44 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-	<IsAotCompatible>True</IsAotCompatible>
-	<IsTrimmable>True</IsTrimmable>
-	<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-	<AssemblyName>ServerEmus.DllNetwork</AssemblyName>
-	<Version>1.0.0</Version>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="LiteNetLib" Version="2.1.4" />
-    <PackageReference Include="Serilog" Version="4.4.0" />
-  </ItemGroup>
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<Authors>ServerEmus;Detanup01</Authors>
+		<Company>ServerEmus</Company>
+		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<RepositoryUrl>https://github.com/ServerEmus/DllNetwork</RepositoryUrl>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageProjectUrl>https://github.com/ServerEmus/DllNetwork</PackageProjectUrl>
+		<Copyright>$(Company)</Copyright>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<IsAotCompatible>True</IsAotCompatible>
+		<IsTrimmable>True</IsTrimmable>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<AssemblyName>ServerEmus.DllNetwork</AssemblyName>
+		<Version>1.0.0</Version>
+		<FileVersion>$(Version)</FileVersion>
+		<AssemblyVersion>$(Version)</AssemblyVersion>
+	</PropertyGroup>
 	
+	<ItemGroup>
+		<None Include="..\LICENSE" Pack="true" PackagePath="\" />
+		<None Include="..\README.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="StyleCop.Analyzers.Unstable" Version="1.2.0.556">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<None Remove="stylecop.json" />
+		<AdditionalFiles Include="stylecop.json" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="LiteNetLib" Version="2.1.4" />
+		<PackageReference Include="Serilog" Version="4.4.0" />
+	</ItemGroup>
+
 </Project>

@@ -1,6 +1,7 @@
-﻿using LiteNetLib;
+﻿using DllNetwork.Listeners;
+using DllNetwork.Settings;
+using LiteNetLib;
 using LiteNetLib.Utils;
-using DllNetwork.Listeners;
 using Serilog;
 using System.Net;
 
@@ -8,9 +9,6 @@ namespace DllNetwork.Managers;
 
 public class ClientManager
 {
-    private readonly NetManager _manager;
-    private readonly NetDataWriter writer = new();
-    private readonly Dictionary<string, NetPeer?> AccountToPeer = [];
     public static ClientManager Instance
     {
         get
@@ -20,11 +18,13 @@ public class ClientManager
         }
     }
 
-    public bool IsRunning => _manager.IsRunning;
+    private readonly NetManager manager;
+    private readonly NetDataWriter writer = new();
+    private readonly Dictionary<string, NetPeer?> accountToPeer = [];
 
     public ClientManager()
     {
-        _manager = new(ClientListener.Listener.Value)
+        manager = new(ClientListener.Listener.Value)
         {
             BroadcastReceiveEnabled = false,
             DontRoute = true,
@@ -39,11 +39,12 @@ public class ClientManager
         ClientListener.OnDisconnected += ClientListener_OnDisconnected;
     }
 
+    public bool IsRunning => manager.IsRunning;
+
     public void Start()
     {
-        
-        _manager.Start(NetworkSettings.Instance.Binding.BindIpv4, NetworkSettings.Instance.Binding.BindIpv6, 0);
-        Log.Information("[NetClient.Start] Started on {Port}", _manager.LocalPort);
+        manager.Start(NetworkSettings.Instance.Binding.BindIpv4, NetworkSettings.Instance.Binding.BindIpv6, 0);
+        Log.Information("[NetClient.Start] Started on {Port}", manager.LocalPort);
     }
 
     public void Connect(string address, int port, string accountId)
@@ -51,7 +52,7 @@ public class ClientManager
         writer.Reset();
         writer.Put(NetworkSettings.Instance.Connection.ConnectionKey);
         writer.Put(NetworkSettings.Instance.Account.AccountId);
-        AccountToPeer[accountId] = _manager.Connect(address, port, writer);
+        accountToPeer[accountId] = manager.Connect(address, port, writer);
     }
 
     public void Connect(IPEndPoint endPoint, string accountId)
@@ -59,31 +60,36 @@ public class ClientManager
         writer.Reset();
         writer.Put(NetworkSettings.Instance.Connection.ConnectionKey);
         writer.Put(NetworkSettings.Instance.Account.AccountId);
-        AccountToPeer[accountId] = _manager.Connect(endPoint, writer);
+        accountToPeer[accountId] = manager.Connect(endPoint, writer);
     }
 
     public void Update()
     {
-        _manager.TriggerUpdate();
+        manager.TriggerUpdate();
     }
 
     public void Disconnect(string accountId)
     {
-        if (!AccountToPeer.TryGetValue(accountId, out NetPeer? peer) || peer == null)
+        if (!accountToPeer.TryGetValue(accountId, out NetPeer? peer) || peer == null)
+        {
             return;
+        }
 
-        _manager.DisconnectPeer(peer);
+        manager.DisconnectPeer(peer);
     }
 
     public void Stop()
     {
-        _manager.Stop();
+        manager.Stop();
     }
 
-    public void Send<T>(T data, string accountId, byte channelNumber = 0, DeliveryMethod options = DeliveryMethod.ReliableOrdered) where T : INetSerializable
+    public void Send<T>(T data, string accountId, byte channelNumber = 0, DeliveryMethod options = DeliveryMethod.ReliableOrdered)
+        where T : INetSerializable
     {
-        if (!AccountToPeer.TryGetValue(accountId, out NetPeer? peer) || peer == null)
+        if (!accountToPeer.TryGetValue(accountId, out NetPeer? peer) || peer == null)
+        {
             return;
+        }
 
         writer.Reset();
         PacketProcessor.Processor.WriteNetSerializable(writer, ref data);
@@ -92,24 +98,28 @@ public class ClientManager
 
     public void Send(ReadOnlySpan<byte> data, string accountId, byte channelNumber = 0, DeliveryMethod options = DeliveryMethod.ReliableOrdered)
     {
-        if (!AccountToPeer.TryGetValue(accountId, out NetPeer? peer) || peer == null)
+        if (!accountToPeer.TryGetValue(accountId, out NetPeer? peer) || peer == null)
+        {
             return;
+        }
 
         peer.Send(data, channelNumber, options);
     }
 
     public bool IsAccountConnected(string accountId)
     {
-        return AccountToPeer.ContainsKey(accountId);
+        return accountToPeer.ContainsKey(accountId);
     }
 
     private void ClientListener_OnDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
     {
-        for (int i = 0; i < AccountToPeer.Count; i++)
+        for (int i = 0; i < accountToPeer.Count; i++)
         {
-            var kv = AccountToPeer.ElementAt(i);
+            var kv = accountToPeer.ElementAt(i);
             if (kv.Value == peer)
-                AccountToPeer.Remove(kv.Key);
+            {
+                accountToPeer.Remove(kv.Key);
+            }
         }
     }
 }

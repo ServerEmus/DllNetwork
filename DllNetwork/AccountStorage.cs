@@ -3,44 +3,22 @@ using System.Net;
 
 namespace DllNetwork;
 
-public class NetPeerStore
+public class AccountStorage
 {
-    private struct Store()
-    {
-        public string AccountId = string.Empty;
-        public int PeerId;
-        public int Port;
-        public readonly SortedList<long, List<IPAddress>> RTTAddresses = [];
+    private static readonly Dictionary<string, Storage> Stores = [];
 
-        public List<IPAddress> NetworkAddresses
-        {
-            get
-            {
-                if (isCacheValid)
-                    return cachedAddresses;
-
-                cachedAddresses = [.. RTTAddresses.Values.SelectMany(static list => list)];
-                isCacheValid = true;
-                return cachedAddresses;
-            }
-        }
-
-        internal bool isCacheValid = false;
-        private List<IPAddress> cachedAddresses = [];
-    }
-
-
-    static readonly Dictionary<string, Store> Stores = [];
     public static IEnumerable<string> AccountIdList => Stores.Keys;
 
     public static void SetAddress(string accountId, IPAddress address, long rtt)
     {
-        GetStore(accountId, out Store store);
+        GetStore(accountId, out Storage store);
 
         if (store.NetworkAddresses.Contains(address))
+        {
             return;
+        }
 
-        store.isCacheValid = false;
+        store.IsCacheValid = false;
 
         if (!store.RTTAddresses.TryGetValue(rtt, out var iPAddresses))
         {
@@ -54,7 +32,7 @@ public class NetPeerStore
 
     public static void SetPort(string accountId, int port)
     {
-        GetStore(accountId, out Store store);
+        GetStore(accountId, out Storage store);
 
         store.Port = port;
 
@@ -63,7 +41,7 @@ public class NetPeerStore
 
     public static void SetPeerId(string accountId, int peerId)
     {
-        GetStore(accountId, out Store store);
+        GetStore(accountId, out Storage store);
 
         store.PeerId = peerId;
 
@@ -78,8 +56,10 @@ public class NetPeerStore
     public static bool TryGetPeerId(string accountId, [NotNullWhen(true)] out int peerId)
     {
         peerId = 0;
-        if (!Stores.TryGetValue(accountId, out Store store))
+        if (!Stores.TryGetValue(accountId, out Storage store))
+        {
             return false;
+        }
 
         peerId = store.PeerId;
         return peerId != 0;
@@ -88,8 +68,10 @@ public class NetPeerStore
     public static bool TryGetAddress(string accountId, out List<IPAddress> addresses)
     {
         addresses = [];
-        if (!Stores.TryGetValue(accountId, out Store store))
+        if (!Stores.TryGetValue(accountId, out Storage store))
+        {
             return false;
+        }
 
         addresses = store.NetworkAddresses;
         return addresses.Count != 0;
@@ -98,8 +80,10 @@ public class NetPeerStore
     public static bool TryGetFirstAddress(string accountId, [NotNullWhen(true)] out IPAddress? address)
     {
         address = null;
-        if (!Stores.TryGetValue(accountId, out Store store))
+        if (!Stores.TryGetValue(accountId, out Storage store))
+        {
             return false;
+        }
 
         address = store.NetworkAddresses.FirstOrDefault();
         return address != null;
@@ -108,8 +92,10 @@ public class NetPeerStore
     public static bool TryGetPort(string accountId, out int port)
     {
         port = default;
-        if (!Stores.TryGetValue(accountId, out Store store))
+        if (!Stores.TryGetValue(accountId, out Storage store))
+        {
             return false;
+        }
 
         port = store.Port;
         return port != 0;
@@ -119,16 +105,22 @@ public class NetPeerStore
     {
         endPoint = null;
 
-        if (!Stores.TryGetValue(accountId, out Store store))
+        if (!Stores.TryGetValue(accountId, out Storage store))
+        {
             return false;
+        }
 
         IPAddress? ip = store.NetworkAddresses.FirstOrDefault();
         if (ip == null)
+        {
             return false;
+        }
 
         int port = store.Port;
         if (port == 0)
+        {
             return false;
+        }
 
         endPoint = new(ip, port);
         return true;
@@ -145,18 +137,22 @@ public class NetPeerStore
     public static bool TryGetBestRTT(string accountId, out IPAddress? bestAddress)
     {
         bestAddress = null;
-        if (!Stores.TryGetValue(accountId, out Store store))
+        if (!Stores.TryGetValue(accountId, out Storage store))
+        {
             return false;
+        }
 
         var rttFirst = store.RTTAddresses.FirstOrDefault();
         if (rttFirst.Value.Count == 0)
+        {
             return false;
+        }
 
         bestAddress = rttFirst.Value.FirstOrDefault();
         return bestAddress != null;
     }
 
-    private static void GetStore(string accountId, out Store store)
+    private static void GetStore(string accountId, out Storage store)
     {
         if (!Stores.TryGetValue(accountId, out store))
         {
@@ -165,5 +161,31 @@ public class NetPeerStore
                 AccountId = accountId,
             };
         }
+    }
+
+    private struct Storage()
+    {
+        public string AccountId = string.Empty;
+        public int PeerId;
+        public int Port;
+        public readonly SortedList<long, List<IPAddress>> RTTAddresses = [];
+        internal bool IsCacheValid = false;
+
+        public List<IPAddress> NetworkAddresses
+        {
+            get
+            {
+                if (IsCacheValid)
+                {
+                    return field;
+                }
+
+                field = [.. RTTAddresses.Values.SelectMany(static list => list)];
+                IsCacheValid = true;
+                return field;
+            }
+        }
+
+        = [];
     }
 }

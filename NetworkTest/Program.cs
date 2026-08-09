@@ -1,6 +1,7 @@
 ﻿using DllNetwork;
 using DllNetwork.Broadcast;
 using DllNetwork.Managers;
+using DllNetwork.Settings;
 using NetworkTest.CustomPacket;
 using NetworkTest.Ini;
 using Serilog;
@@ -41,7 +42,7 @@ internal class Program
 
             ServerManager.Instance.Update();
             ClientManager.Instance.Update();
-            BroadcastUdp.UdpUpdate();
+            BroadcastUdp.UdpReceive();
 
             if (string.IsNullOrEmpty(input))
                 continue;

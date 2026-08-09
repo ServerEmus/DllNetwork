@@ -1,81 +1,102 @@
-﻿using LiteNetLib.Utils;
-using DllNetwork.Json;
+﻿using DllNetwork.Json;
 using DllNetwork.Managers;
+using DllNetwork.Settings;
+using LiteNetLib.Utils;
 using System.Net;
 using System.Net.Sockets;
 
 namespace DllNetwork.Broadcast;
 
+/// <summary>
+/// Provides broadcasting via udp.
+/// </summary>
 public static class BroadcastUdp
 {
-    static readonly UdpClient udp;
-    static readonly UdpClient? udpv6;
-    static readonly NetDataWriter netDataWriter = new();
-    public static readonly List<BroadcastJson> AcceptedBroadcasts = [];
+    private static readonly List<BroadcastAccount> AcceptedBroadcasts = [];
+    private static readonly UdpClient Udp;
+    private static readonly UdpClient? Udpv6;
+    private static readonly NetDataWriter NetDataWriter = new();
+    private static readonly IPEndPoint V4Endpoint;
+    private static readonly IPEndPoint V6Endpoint;
+    private static bool isStarted;
 
     static BroadcastUdp()
     {
         // UDP v4
-        udp = new()
+        Udp = new()
         {
             EnableBroadcast = true,
         };
 
-
         int broadcastPort = AddressHelper.GetPort(NetworkSettings.Instance.Broadcast.BroadcastPort, NetworkSettings.Instance.Broadcast.EndRangeBroadcastPort, false);
-        IPEndPoint broadCastEndPoint = new(IPAddress.Any, broadcastPort);
+        V4Endpoint = new(IPAddress.Any, broadcastPort);
 
-        udp.Client.Bind(broadCastEndPoint);
-
-        // UDP v6
-        if (!NetworkSettings.Instance.Manager.EnableIpv6)
-            return;
-
-        udpv6 = new()
+        Udpv6 = new()
         {
             EnableBroadcast = true,
         };
 
         broadcastPort = AddressHelper.GetPort(NetworkSettings.Instance.Broadcast.BroadcastPort, NetworkSettings.Instance.Broadcast.EndRangeBroadcastPort, false);
-        broadCastEndPoint = new(IPAddress.IPv6Any, broadcastPort);
-
-        udpv6.Client.Bind(broadCastEndPoint);
+        V6Endpoint = new(IPAddress.IPv6Any, broadcastPort);
     }
 
+    /// <summary>
+    /// Starts the udp clients and sends a <see cref="BroadcastPacket"/>.
+    /// </summary>
     public static void Start()
     {
+        if (isStarted)
+        {
+            Udp.Client.Bind(V4Endpoint);
+
+            if (!NetworkSettings.Instance.Manager.EnableIpv6)
+            {
+                Udpv6!.Client.Bind(V6Endpoint);
+            }
+
+            isStarted = true;
+        }
+
         BroadcastPacket packet = new()
-        { 
+        {
             Id = NetworkSettings.Instance.Account.AccountId,
             Addresses = [.. AddressHelper.Addresses.Select(static x => x.ToString())],
             ConnectPort = ServerManager.Instance.Port,
         };
 
-        PacketProcessor.Processor.WriteNetSerializable(netDataWriter, ref packet);
+        PacketProcessor.Processor.WriteNetSerializable(NetDataWriter, ref packet);
 
-        var span = netDataWriter.AsReadOnlySpan();
+        var span = NetDataWriter.AsReadOnlySpan();
 
         for (int port = NetworkSettings.Instance.Broadcast.BroadcastPort; port < NetworkSettings.Instance.Broadcast.EndRangeBroadcastPort; port++)
         {
             IPEndPoint address = new(IPAddress.Broadcast, port);
-            udp.Send(span, address);
-            udpv6?.Send(span, address);
+            Udp.Send(span, address);
+            Udpv6?.Send(span, address);
         }
     }
 
+    /// <summary>
+    /// Stops the udp clients.
+    /// </summary>
     public static void Stop()
     {
-
+        Udp.Close();
+        Udpv6?.Close();
     }
 
-    public static List<BroadcastJson> GetList()
+    /// <summary>
+    /// Gets the broadcast accounts from the accepted list.
+    /// </summary>
+    /// <returns>The broadcast accounts.</returns>
+    public static List<BroadcastAccount> GetList()
     {
         foreach (var item in AcceptedBroadcasts)
         {
             PingHelper.ClearPingedAccount(item.AccountId);
         }
 
-        List<BroadcastJson> normalized = [];
+        List<BroadcastAccount> normalized = [];
 
         foreach (var item in AcceptedBroadcasts)
         {
@@ -100,25 +121,28 @@ public static class BroadcastUdp
         return AcceptedBroadcasts;
     }
 
-
-    public static void UdpUpdate()
+    /// <summary>
+    /// Starts to receieve from the udp clients.
+    /// </summary>
+    public static void UdpReceive()
     {
-        udp.ReceiveAsync().ContinueWith(task =>
+        Udp.ReceiveAsync().ContinueWith(Receive);
+        Udpv6?.ReceiveAsync().ContinueWith(Receive);
+    }
+
+    internal static void AddBroadcast(BroadcastAccount broadcastJson)
+    {
+        AcceptedBroadcasts.Add(broadcastJson);
+    }
+
+    private static void Receive(Task<UdpReceiveResult> task)
+    {
+        if (!task.IsCompletedSuccessfully)
         {
-            if (!task.IsCompletedSuccessfully)
-                return;
+            return;
+        }
 
-            NetDataReader reader = new(task.Result.Buffer);
-            PacketProcessor.Processor.ReadPacket(reader, task.Result.RemoteEndPoint);
-        });
-
-        udpv6?.ReceiveAsync().ContinueWith(task =>
-        {
-            if (!task.IsCompletedSuccessfully)
-                return;
-
-            NetDataReader reader = new(task.Result.Buffer);
-            PacketProcessor.Processor.ReadPacket(reader, task.Result.RemoteEndPoint);
-        });
+        NetDataReader reader = new(task.Result.Buffer);
+        PacketProcessor.Processor.ReadPacket(reader, task.Result.RemoteEndPoint);
     }
 }

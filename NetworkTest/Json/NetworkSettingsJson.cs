@@ -1,6 +1,6 @@
-﻿using DllNetwork;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text;
+using DllNetwork.Settings;
 
 namespace NetworkTest.Json;
 
@@ -24,13 +24,13 @@ internal static class NetworkSettingsJson
         if (!File.Exists(path))
         {
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-            File.WriteAllBytes(path, JsonSerializer.SerializeToUtf8Bytes(NetworkSettings._instance, SourceGenerationContext.Default.NetworkSettings));
-            return NetworkSettings._instance;
+            File.WriteAllBytes(path, JsonSerializer.SerializeToUtf8Bytes(NetworkSettings.Default, SourceGenerationContext.Default.NetworkSettings));
+            return NetworkSettings.Default;
         }
         string json = File.ReadAllText(path, Encoding.UTF8);
         NetworkSettings? settings = JsonSerializer.Deserialize(json, SourceGenerationContext.Default.NetworkSettings);
         if (settings == null)
-            return NetworkSettings._instance;
+            return NetworkSettings.Default;
         return settings;
     }
 }

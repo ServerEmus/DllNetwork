@@ -1,4 +1,4 @@
-﻿using DllNetwork;
+﻿using DllNetwork.Settings;
 using IniParser;
 using IniParser.Model;
 
@@ -23,20 +23,20 @@ internal static class NetworkSettingsIni
     private static NetworkSettings NetworkSettings_OnGet()
     {
         if (AlreadyRead)
-            return NetworkSettings._instance;
+            return NetworkSettings.Default;
 
         string path = Path.Join(AppContext.BaseDirectory, FileName);
         if (!File.Exists(path))
         {
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-            IniData parsedData = IniSourceGeneration.WriteNetworkSettingsIniData(NetworkSettings._instance);
+            IniData parsedData = IniSourceGeneration.WriteNetworkSettingsIniData(NetworkSettings.Default);
             parser.WriteFile(path, parsedData, System.Text.Encoding.UTF8);
             AlreadyRead = true;
-            return NetworkSettings._instance;
+            return NetworkSettings.Default;
         }
         IniData data = parser.ReadFile(path, System.Text.Encoding.UTF8);
-        IniSourceGeneration.ReadNetworkSettingsIniData(NetworkSettings._instance, data);
+        IniSourceGeneration.ReadNetworkSettingsIniData(NetworkSettings.Default, data);
         AlreadyRead = true;
-        return NetworkSettings._instance;
+        return NetworkSettings.Default;
     }
 }

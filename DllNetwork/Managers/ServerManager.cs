@@ -1,14 +1,12 @@
-﻿using LiteNetLib;
+﻿using DllNetwork.Listeners;
+using DllNetwork.Settings;
+using LiteNetLib;
 using LiteNetLib.Utils;
-using DllNetwork.Listeners;
 
 namespace DllNetwork.Managers;
 
 public class ServerManager
 {
-    private readonly NetManager _manager;
-    private readonly NetDataWriter writer = new();
-
     public static ServerManager Instance
     {
         get
@@ -18,11 +16,12 @@ public class ServerManager
         }
     }
 
-    public bool IsRunning => _manager.IsRunning;
+    private readonly NetManager manager;
+    private readonly NetDataWriter writer = new();
 
     public ServerManager()
     {
-        _manager = new(ServerListener.Listener.Value)
+        manager = new(ServerListener.Listener.Value)
         {
             BroadcastReceiveEnabled = false,
             DontRoute = true,
@@ -35,37 +34,42 @@ public class ServerManager
         };
     }
 
-    public int Port => _manager.LocalPort;
+    public bool IsRunning => manager.IsRunning;
+
+    public int Port => manager.LocalPort;
 
     public bool Start(int port = 0)
     {
-        return _manager.Start(NetworkSettings.Instance.Binding.BindIpv4, NetworkSettings.Instance.Binding.BindIpv6, port);
+        return manager.Start(NetworkSettings.Instance.Binding.BindIpv4, NetworkSettings.Instance.Binding.BindIpv6, port);
     }
 
     public void Update()
     {
-        _manager.TriggerUpdate();
+        manager.TriggerUpdate();
     }
 
     public void Stop()
     {
-        _manager.Stop();
+        manager.Stop();
     }
 
-    public void Send<T>(T data, string? accountId = null, byte channelNumber = 0, DeliveryMethod options = DeliveryMethod.ReliableOrdered) where T : INetSerializable
+    public void Send<T>(T data, string? accountId = null, byte channelNumber = 0, DeliveryMethod options = DeliveryMethod.ReliableOrdered)
+        where T : INetSerializable
     {
         writer.Reset();
         PacketProcessor.Processor.WriteNetSerializable(writer, ref data);
         if (string.IsNullOrEmpty(accountId))
         {
-            _manager.SendToAll(writer, channelNumber, options);
+            manager.SendToAll(writer, channelNumber, options);
             return;
         }
 
-        if (!NetPeerStore.TryGetPeerId(accountId, out int peerId))
+        if (!AccountStorage.TryGetPeerId(accountId, out int peerId))
+        {
             return;
+        }
 
-        NetPeer peer = (NetPeer)_manager.GetPeerById(peerId);
+        NetPeer peer = (NetPeer)manager.GetPeerById(peerId);
         peer.Send(writer, channelNumber, options);
     }
 
@@ -73,14 +77,16 @@ public class ServerManager
     {
         if (string.IsNullOrEmpty(accountId))
         {
-            _manager.SendToAll(data.ToArray(), channelNumber, options);
+            manager.SendToAll(data.ToArray(), channelNumber, options);
             return;
         }
 
-        if (!NetPeerStore.TryGetPeerId(accountId, out int peerId))
+        if (!AccountStorage.TryGetPeerId(accountId, out int peerId))
+        {
             return;
+        }
 
-        NetPeer peer = (NetPeer)_manager.GetPeerById(peerId);
+        NetPeer peer = (NetPeer)manager.GetPeerById(peerId);
         peer.Send(data, channelNumber, options);
     }
 }

@@ -1,4 +1,4 @@
-﻿using DllNetwork;
+﻿using DllNetwork.Settings;
 using IniParser;
 
 namespace NetworkTest.Ini;
