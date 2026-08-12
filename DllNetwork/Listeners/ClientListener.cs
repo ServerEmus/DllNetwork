@@ -44,7 +44,7 @@ internal class ClientListener : INetEventListener
     /// <inheritdoc/>
     public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod)
     {
-        NetworkLog.Logger.Information($"[ClientListener.OnNetworkReceive] Id: {peer.Id}");
+        NetworkLog.Logger.Debug($"[ClientListener.OnNetworkReceive] Id: {peer.Id}");
         PacketProcessor.Processor.ReadAllPackets(reader, new ReceiveData(peer, channelNumber, deliveryMethod));
     }
 

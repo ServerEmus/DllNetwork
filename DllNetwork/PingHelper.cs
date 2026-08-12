@@ -37,18 +37,18 @@ public static class PingHelper
         if (!addresses.Contains(address))
         {
             AccountIdToPingedIPs.TryUpdate(accountId, [.. addresses, address], addresses);
-            NetworkLog.Logger.Information("PING {Account} -> {ip}", accountId, address);
+            NetworkLog.Logger.Debug("PING {Account} -> {ip}", accountId, address);
             using Ping netPing = new();
             try
             {
                 PingReply result = await netPing.SendPingAsync(address, 1000);
                 if (result.Status != IPStatus.Success)
                 {
-                    NetworkLog.Logger.Information("PING {Account} <- {Address} {Status}", accountId, address, result.Status);
+                    NetworkLog.Logger.Debug("PING {Account} <- {Address} {Status}", accountId, address, result.Status);
                     return;
                 }
 
-                NetworkLog.Logger.Information("PING {Account} <- {Address} {RTT} {Status}", accountId, result.Address, result.RoundtripTime, result.Status);
+                NetworkLog.Logger.Debug("PING {Account} <- {Address} {RTT} {Status}", accountId, result.Address, result.RoundtripTime, result.Status);
                 IpToRTT.AddOrUpdate(result.Address, (ip) => result.RoundtripTime, (ip, rtt) => result.RoundtripTime);
                 onSuccess?.Invoke(accountId, address, result.RoundtripTime);
             }

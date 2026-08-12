@@ -79,7 +79,7 @@ public class ClientManager
         writer.Put(NetworkSettings.Instance.Connection.ConnectionKey);
         writer.Put(NetworkSettings.Instance.Account.AccountId);
         accountToPeer[accountId] = manager.Connect(address, port, writer);
-        NetworkLog.Logger.Information($"Connected: {accountId} {accountToPeer[accountId] != null} {address}");
+        NetworkLog.Logger.Debug($"Connected: {accountId} {accountToPeer[accountId] != null} {address}");
     }
 
     /// <summary>
@@ -93,7 +93,7 @@ public class ClientManager
         writer.Put(NetworkSettings.Instance.Connection.ConnectionKey);
         writer.Put(NetworkSettings.Instance.Account.AccountId);
         accountToPeer[accountId] = manager.Connect(endPoint, writer);
-        NetworkLog.Logger.Information($"Connected: {accountId} {accountToPeer[accountId] != null} {endPoint.Address}");
+        NetworkLog.Logger.Debug($"Connected: {accountId} {accountToPeer[accountId] != null} {endPoint.Address}");
     }
 
     /// <summary>
@@ -114,7 +114,7 @@ public class ClientManager
         writer.Put(NetworkSettings.Instance.Connection.ConnectionKey);
         writer.Put(NetworkSettings.Instance.Account.AccountId);
         accountToPeer[broadcastAccount.AccountId] = manager.Connect(address, broadcastAccount.Port, writer);
-        NetworkLog.Logger.Information($"Connected: {broadcastAccount.AccountId} {accountToPeer[broadcastAccount.AccountId] != null} {address}");
+        NetworkLog.Logger.Debug($"Connected: {broadcastAccount.AccountId} {accountToPeer[broadcastAccount.AccountId] != null} {address}");
     }
 
     /// <summary>

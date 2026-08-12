@@ -36,7 +36,7 @@ public static class PacketProcessor
             return;
         }
 
-        NetworkLog.Logger.Information("BroadcastPacket receveied! {data} {point}", packet, point);
+        NetworkLog.Logger.Debug("BroadcastPacket received! {data} {point}", packet, point);
 
         foreach (var ip in packet.Addresses.Select(IPAddress.Parse))
         {
@@ -58,6 +58,6 @@ public static class PacketProcessor
 
     private static void ReceiveEmpty(EmptyPacket packet, ReceiveData data)
     {
-        NetworkLog.Logger.Information("Empty Packet receveied! {data}", data);
+        NetworkLog.Logger.Debug("Empty Packet receveied! {data}", data);
     }
 }
