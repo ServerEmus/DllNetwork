@@ -14,30 +14,21 @@ public static class BroadcastUdp
 {
     private static readonly List<BroadcastAccount> AcceptedBroadcasts = [];
     private static readonly UdpClient Udp;
-    private static readonly UdpClient? Udpv6;
+    private static readonly UdpClient Udpv6;
     private static readonly NetDataWriter NetDataWriter = new();
-    private static readonly IPEndPoint V4Endpoint;
-    private static readonly IPEndPoint V6Endpoint;
-    private static bool isStarted;
+    private static bool isStarted = false;
 
     static BroadcastUdp()
     {
-        // UDP v4
         Udp = new()
         {
             EnableBroadcast = true,
         };
 
-        int broadcastPort = AddressHelper.GetPort(NetworkSettings.Instance.Broadcast.BroadcastPort, NetworkSettings.Instance.Broadcast.EndRangeBroadcastPort, false);
-        V4Endpoint = new(IPAddress.Any, broadcastPort);
-
         Udpv6 = new()
         {
             EnableBroadcast = true,
         };
-
-        broadcastPort = AddressHelper.GetPort(NetworkSettings.Instance.Broadcast.BroadcastPort, NetworkSettings.Instance.Broadcast.EndRangeBroadcastPort, false);
-        V6Endpoint = new(IPAddress.IPv6Any, broadcastPort);
     }
 
     /// <summary>
@@ -45,13 +36,19 @@ public static class BroadcastUdp
     /// </summary>
     public static void Start()
     {
-        if (isStarted)
+        if (!isStarted)
         {
-            Udp.Client.Bind(V4Endpoint);
+            int broadcastPort = AddressHelper.GetPort(NetworkSettings.Instance.Broadcast.BroadcastPort, NetworkSettings.Instance.Broadcast.EndRangeBroadcastPort, false);
+            IPEndPoint v4Endpoint = new(IPAddress.Any, broadcastPort);
 
-            if (!NetworkSettings.Instance.Manager.EnableIpv6)
+            Udp.Client.Bind(v4Endpoint);
+
+            if (NetworkSettings.Instance.Manager.EnableIpv6)
             {
-                Udpv6!.Client.Bind(V6Endpoint);
+                broadcastPort = AddressHelper.GetPort(NetworkSettings.Instance.Broadcast.BroadcastPort, NetworkSettings.Instance.Broadcast.EndRangeBroadcastPort, false);
+                IPEndPoint v6Endpoint = new(IPAddress.IPv6Any, broadcastPort);
+
+                Udpv6.Client.Bind(v6Endpoint);
             }
 
             isStarted = true;
@@ -72,7 +69,7 @@ public static class BroadcastUdp
         {
             IPEndPoint address = new(IPAddress.Broadcast, port);
             Udp.Send(span, address);
-            Udpv6?.Send(span, address);
+            Udpv6.Send(span, address);
         }
     }
 
@@ -82,7 +79,8 @@ public static class BroadcastUdp
     public static void Stop()
     {
         Udp.Close();
-        Udpv6?.Close();
+        Udpv6.Close();
+        isStarted = false;
     }
 
     /// <summary>
@@ -126,13 +124,26 @@ public static class BroadcastUdp
     /// </summary>
     public static void UdpReceive()
     {
+        if (!isStarted)
+        {
+            return;
+        }
+
         Udp.ReceiveAsync().ContinueWith(Receive);
-        Udpv6?.ReceiveAsync().ContinueWith(Receive);
+
+        if (NetworkSettings.Instance.Manager.EnableIpv6)
+        {
+            Udpv6.ReceiveAsync().ContinueWith(Receive);
+        }
     }
 
-    internal static void AddBroadcast(BroadcastAccount broadcastJson)
+    /// <summary>
+    /// Add <paramref name="account"/> into internal accepted accounts.
+    /// </summary>
+    /// <param name="account">The account to add.</param>
+    internal static void AddBroadcast(BroadcastAccount account)
     {
-        AcceptedBroadcasts.Add(broadcastJson);
+        AcceptedBroadcasts.Add(account);
     }
 
     private static void Receive(Task<UdpReceiveResult> task)

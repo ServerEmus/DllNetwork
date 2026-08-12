@@ -55,14 +55,14 @@ public class AccountStorage
 
     public static bool TryGetPeerId(string accountId, [NotNullWhen(true)] out int peerId)
     {
-        peerId = 0;
+        peerId = -1;
         if (!Stores.TryGetValue(accountId, out Storage store))
         {
             return false;
         }
 
         peerId = store.PeerId;
-        return peerId != 0;
+        return peerId != -1;
     }
 
     public static bool TryGetAddress(string accountId, out List<IPAddress> addresses)

@@ -6,7 +6,6 @@ using NetworkTest.CustomPacket;
 using NetworkTest.Ini;
 using Serilog;
 using System.Net;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace NetworkTest;
 
@@ -14,12 +13,6 @@ internal class Program
 {
     static void Main(string[] _)
     {
-        Console.WriteLine("Your IP addresses:");
-        foreach (var item in AddressHelper.GetInterfaceAddresses())
-        {
-            Log.Information("Address: {address}", item);
-        }
-
         File.Delete("networktest.txt");
         Shared.MainLogger.LevelSwitch.MinimumLevel = Serilog.Events.LogEventLevel.Verbose;
         Shared.MainLogger.ConsoleLevelSwitch.MinimumLevel = Serilog.Events.LogEventLevel.Verbose;
@@ -29,11 +22,21 @@ internal class Program
         PacketProcessor.Processor.SubscribeNetSerializable<MessagePacket, ReceiveData>(MessagePacket.OnReceived);
         NetworkSettingsIni.Connect();
 
+        Log.Information("Your IP addresses:");
+        foreach (var item in AddressHelper.Addresses)
+        {
+            Log.Information("Address: {address}", item);
+        }
+
+
         ServerManager.Instance.Start();
         ClientManager.Instance.Start();
         Log.Information("Id: {id}", NetworkSettings.Instance.Account.AccountId);
         Log.Information("Server started on port: {port}", ServerManager.Instance.Port);
-        ClientManager.Instance.Connect(new IPEndPoint(IPAddress.Loopback, ServerManager.Instance.Port), NetworkSettings.Instance.Account.AccountId);
+
+        ClientManager.OnConnectionFailed += ClientManager_OnConnectionFailed;
+
+        ClientManager.Instance.SelfConnect();
 
         string? input = null;
         while (input?.ToLower() != "q")
@@ -96,7 +99,7 @@ internal class Program
 
             if (input.StartsWith("c!") && input.Contains(' '))
             {
-                string[] data = input[1..].Split(' ', 2);
+                string[] data = input[3..].Split(' ', 2);
                 string account = data[0];
                 string msg = data[1];
                 ClientManager.Instance.Send(new MessagePacket() { Message = msg }, account);
@@ -104,7 +107,7 @@ internal class Program
 
             if (input.StartsWith("s!") && input.Contains(' '))
             {
-                string[] data = input[1..].Split(' ', 2);
+                string[] data = input[3..].Split(' ', 2);
                 string account = data[0];
                 string msg = data[1];
                 ServerManager.Instance.Send(new MessagePacket() { Message = msg }, account);
@@ -114,5 +117,28 @@ internal class Program
         ClientManager.Instance.Stop();
         ServerManager.Instance.Stop();
 
+    }
+
+    private static void ClientManager_OnConnectionFailed(string accountId, IPAddress failedAddress)
+    {
+        string address = failedAddress.ToString();
+
+        foreach (var item in BroadcastUdp.GetList().
+            Concat(BroadcastCustom.GetList()).
+            Distinct().
+            Where(x => x.AccountId == accountId &&
+                     !ClientManager.Instance.IsAccountConnected(accountId)
+                    ))
+        {
+            item.Addresses.Remove(address);
+
+            if (item.Addresses.Count == 0)
+            {
+                return;
+            }    
+
+            string addressToConnect = item.Addresses.FirstOrDefault()!;
+            ClientManager.Instance.Connect(addressToConnect, item.Port, item.AccountId);
+        }
     }
 }

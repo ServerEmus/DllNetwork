@@ -55,4 +55,9 @@ public class NetworkSettings
     /// Gets or sets the connection configuration settings.
     /// </summary>
     public ConnectionSettings Connection { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets the logging settings.
+    /// </summary>
+    public LogSettings Log { get; set; } = new();
 }

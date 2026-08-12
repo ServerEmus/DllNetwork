@@ -5,8 +5,14 @@ using System.Net.Sockets;
 
 namespace DllNetwork;
 
+/// <summary>
+/// Provides a helper class for ip addresses.
+/// </summary>
 public static class AddressHelper
 {
+    /// <summary>
+    /// Gets the usable addresses list.
+    /// </summary>
     public static List<IPAddress> Addresses
     {
         get
@@ -25,6 +31,13 @@ public static class AddressHelper
         }
     }
 
+    /// <summary>
+    /// Gets the ip addresses.
+    /// </summary>
+    /// <returns>The usable ip addresses.</returns>
+    /// <remarks>
+    /// Filters out the loopback, turned off interface.
+    /// </remarks>
     public static List<IPAddress> GetInterfaceAddresses()
     {
         List<IPAddress> addresses = [];
@@ -43,6 +56,12 @@ public static class AddressHelper
         return addresses;
     }
 
+    /// <summary>
+    /// Checks whenever the <paramref name="port"/> is in use.
+    /// </summary>
+    /// <param name="port">The port to check.</param>
+    /// <param name="isTcp">Whenever the port is used by tcp or udp.</param>
+    /// <returns><see langword="true"/> if port is being used; otherwise, <see langword="false"/>.</returns>
     public static bool IsPortInUse(int port, bool isTcp = true)
     {
         IPGlobalProperties properties = IPGlobalProperties.GetIPGlobalProperties();
@@ -51,6 +70,13 @@ public static class AddressHelper
         return listeners.Any(x => x.Port == port);
     }
 
+    /// <summary>
+    /// Gets a valid port in range.
+    /// </summary>
+    /// <param name="startPort">The port to start the check.</param>
+    /// <param name="endPort">The exclusive end port to check.</param>
+    /// <param name="isTcp">Whenever the port to be tcp to udp.</param>
+    /// <returns>The valid port that can be used; otherwise, 0.</returns>
     public static int GetPort(int startPort = 7777, int endPort = 8000, bool isTcp = true)
     {
         for (int port = startPort; port < endPort; port++)

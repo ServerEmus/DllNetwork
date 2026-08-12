@@ -36,11 +36,11 @@ public static class PacketProcessor
             return;
         }
 
-        Log.Information("BroadcastPacket receveied! {data} {point}", packet, point);
+        NetworkLog.Logger.Information("BroadcastPacket receveied! {data} {point}", packet, point);
 
         foreach (var ip in packet.Addresses.Select(IPAddress.Parse))
         {
-            _ = PingHelper.PingAddress(packet.Id, ip, (id, ip, rtt) =>
+            PingHelper.PingAddress(packet.Id, ip, (id, ip, rtt) =>
             {
                 AccountStorage.SetAddress(id, ip, rtt);
                 BroadcastUdp.AddBroadcast(new()
@@ -58,6 +58,6 @@ public static class PacketProcessor
 
     private static void ReceiveEmpty(EmptyPacket packet, ReceiveData data)
     {
-        Log.Information("Empty Packet receveied! {data}", data);
+        NetworkLog.Logger.Information("Empty Packet receveied! {data}", data);
     }
 }

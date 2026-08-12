@@ -56,11 +56,11 @@ public static class BroadcastCustom
         try
         {
             string rsp = response.Content.ReadAsStringAsync().Result;
-            Log.Warning("[BroadcastCustom.Start] Error: {code} {response}", response.StatusCode, rsp);
+            NetworkLog.Logger.Warning("[BroadcastCustom.Start] Error: {code} {response}", response.StatusCode, rsp);
         }
         catch (Exception ex)
         {
-            Log.Warning("[BroadcastCustom.Start] Error {ex}", ex);
+            NetworkLog.Logger.Warning("[BroadcastCustom.Start] Error {ex}", ex);
         }
     }
 
@@ -105,7 +105,7 @@ public static class BroadcastCustom
         }
         catch (Exception ex)
         {
-            Log.Warning("[BroadcastCustom.GetList] Error {ex}", ex);
+            NetworkLog.Logger.Warning("[BroadcastCustom.GetList] Error {ex}", ex);
         }
 
         return broadcasts;
