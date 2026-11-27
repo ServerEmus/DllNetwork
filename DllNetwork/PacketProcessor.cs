@@ -58,6 +58,6 @@ public static class PacketProcessor
 
     private static void ReceiveEmpty(EmptyPacket packet, ReceiveData data)
     {
-        NetworkLog.Logger.Debug("Empty Packet receveied! {data}", data);
+        NetworkLog.Logger.Debug("Empty Packet received! {data}", data);
     }
 }

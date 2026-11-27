@@ -10,7 +10,7 @@ public struct MessagePacket : INetSerializable
 
     internal static void OnReceived(MessagePacket packet, ReceiveData data)
     {
-        Log.Information("Message Packet receveied! {data} {packet}", data, packet);
+        Log.Information("Message Packet received! {data} {packet}", data, packet);
     }
 
     public void Deserialize(NetDataReader reader)
